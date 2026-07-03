@@ -25,9 +25,11 @@ declare global {
   }
 }
 
-export const tg = window.Telegram?.WebApp;
+export const getTelegramWebApp = () => window.Telegram?.WebApp;
 
 export const initTelegram = () => {
+  const tg = getTelegramWebApp();
+
   tg?.ready();
   tg?.expand();
 
@@ -49,9 +51,12 @@ export const initTelegram = () => {
   setVar("--tg-surface", theme.secondary_bg_color);
 };
 
-export const getInitData = () => tg?.initData || import.meta.env.VITE_DEV_INIT_DATA || "";
+export const getInitData = () =>
+  getTelegramWebApp()?.initData || import.meta.env.VITE_DEV_INIT_DATA || "";
 
 export const openExternal = (url: string) => {
+  const tg = getTelegramWebApp();
+
   if (tg?.openLink) {
     tg.openLink(url);
     return;
