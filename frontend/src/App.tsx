@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Archive,
   CalendarDays,
@@ -34,6 +34,12 @@ type RoleMode = "member" | "admin";
 type MemberTab = "pay" | "history" | "profile";
 type AdminTab = "dashboard" | "members" | "deferrals" | "settings";
 const MIN_LOADING_MS = 1800;
+
+type NavItem<T extends string> = {
+  value: T;
+  label: string;
+  icon: ReactNode;
+};
 
 const instrumentLabels: Record<Instrument, string> = {
   mic: "Вокал",
@@ -112,15 +118,74 @@ function StatusBadge({ status }: { status: keyof typeof statusCopy }) {
 function LoadingScreen() {
   return (
     <main className="loading-screen">
-      <div className="loading-orbit" aria-hidden="true">
-        <div className="loading-carpet" />
-        <span className="orbit-dot dot-a" />
-        <span className="orbit-dot dot-b" />
-        <span className="orbit-dot dot-c" />
+      <div className="rug-roll-loader" aria-hidden="true">
+        <div className="rug-roll-core" />
+        <div className="rolling-rug">
+          <span className="rug-logo-script">KOVER</span>
+        </div>
       </div>
-      <KoverMark />
-      <p>KOVER</p>
+      <p>раскатываем уют</p>
     </main>
+  );
+}
+
+function RoleToggle({
+  mode,
+  onChange
+}: {
+  mode: RoleMode;
+  onChange: (mode: RoleMode) => void;
+}) {
+  const options: NavItem<RoleMode>[] = [
+    { value: "member", label: "Участник", icon: <CreditCard size={18} /> },
+    { value: "admin", label: "Админ", icon: <SlidersHorizontal size={18} /> }
+  ];
+
+  return (
+    <div className="role-toggle" role="group" aria-label="Режим приложения">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={mode === option.value ? "role-option active" : "role-option"}
+          aria-pressed={mode === option.value}
+          onClick={() => onChange(option.value)}
+        >
+          <span className="control-icon">{option.icon}</span>
+          <span>{option.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function NavDock<T extends string>({
+  items,
+  value,
+  onChange,
+  variant
+}: {
+  items: NavItem<T>[];
+  value: T;
+  onChange: (value: T) => void;
+  variant: "member" | "admin";
+}) {
+  return (
+    <nav className={`nav-dock ${variant}-dock`} aria-label="Разделы">
+      {items.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          className={value === item.value ? "nav-card active" : "nav-card"}
+          aria-current={value === item.value ? "page" : undefined}
+          onClick={() => onChange(item.value)}
+        >
+          <span className="nav-icon">{item.icon}</span>
+          <span className="nav-label">{item.label}</span>
+          <span className="nav-glow" aria-hidden="true" />
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -249,18 +314,7 @@ export function App() {
             <h1>{mode === "admin" ? "Руководитель" : displayName(summary.musician)}</h1>
           </div>
         </div>
-        {isAdmin && (
-          <div className="segment role-switch">
-            <button className={mode === "member" ? "active" : ""} onClick={() => setMode("member")}>
-              <CreditCard size={17} />
-              Участник
-            </button>
-            <button className={mode === "admin" ? "active" : ""} onClick={() => setMode("admin")}>
-              <SlidersHorizontal size={17} />
-              Админ
-            </button>
-          </div>
-        )}
+        {isAdmin && <RoleToggle mode={mode} onChange={setMode} />}
       </header>
 
       {mode === "admin" && isAdmin ? (
@@ -274,23 +328,15 @@ export function App() {
 
 function MemberApp({ summary, refresh }: { summary: MemberSummary; refresh: () => Promise<void> }) {
   const [tab, setTab] = useState<MemberTab>("pay");
+  const items: NavItem<MemberTab>[] = [
+    { value: "pay", label: "Оплата", icon: <CreditCard size={19} /> },
+    { value: "history", label: "История", icon: <History size={19} /> },
+    { value: "profile", label: "Профиль", icon: <Users size={19} /> }
+  ];
 
   return (
     <>
-      <nav className="segment nav-tabs">
-        <button className={tab === "pay" ? "active" : ""} onClick={() => setTab("pay")}>
-          <CreditCard size={17} />
-          Оплата
-        </button>
-        <button className={tab === "history" ? "active" : ""} onClick={() => setTab("history")}>
-          <History size={17} />
-          История
-        </button>
-        <button className={tab === "profile" ? "active" : ""} onClick={() => setTab("profile")}>
-          <Users size={17} />
-          Профиль
-        </button>
-      </nav>
+      <NavDock items={items} value={tab} onChange={setTab} variant="member" />
 
       {tab === "pay" && <PaymentPanel summary={summary} refresh={refresh} />}
       {tab === "history" && <HistoryPanel summary={summary} />}
@@ -459,27 +505,16 @@ function ProfilePanel({ musician, summary }: { musician: Musician; summary: Memb
 
 function AdminApp() {
   const [tab, setTab] = useState<AdminTab>("dashboard");
+  const items: NavItem<AdminTab>[] = [
+    { value: "dashboard", label: "Оплаты", icon: <CalendarDays size={19} /> },
+    { value: "members", label: "Участники", icon: <Users size={19} /> },
+    { value: "deferrals", label: "Отсрочки", icon: <Clock size={19} /> },
+    { value: "settings", label: "Настройки", icon: <Settings size={19} /> }
+  ];
 
   return (
     <>
-      <nav className="segment nav-tabs">
-        <button className={tab === "dashboard" ? "active" : ""} onClick={() => setTab("dashboard")}>
-          <CalendarDays size={17} />
-          Оплаты
-        </button>
-        <button className={tab === "members" ? "active" : ""} onClick={() => setTab("members")}>
-          <Users size={17} />
-          Участники
-        </button>
-        <button className={tab === "deferrals" ? "active" : ""} onClick={() => setTab("deferrals")}>
-          <Clock size={17} />
-          Отсрочки
-        </button>
-        <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}>
-          <Settings size={17} />
-          Настройки
-        </button>
-      </nav>
+      <NavDock items={items} value={tab} onChange={setTab} variant="admin" />
 
       {tab === "dashboard" && <AdminDashboard />}
       {tab === "members" && <AdminMembers />}
