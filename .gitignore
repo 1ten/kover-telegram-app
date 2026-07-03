@@ -8,3 +8,4 @@ dist
 coverage
 backend/prisma/dev.db
 *.tsbuildinfo
+.wrangler
