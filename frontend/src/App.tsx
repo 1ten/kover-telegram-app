@@ -117,11 +117,10 @@ function StatusBadge({ status }: { status: keyof typeof statusCopy }) {
 function LoadingScreen() {
   return (
     <main className="loading-screen">
-      <div className="rug-roll-loader" aria-hidden="true">
-        <div className="rug-roll-core" />
-        <div className="rolling-rug">
-          <span className="rug-logo-script">KOVER</span>
-        </div>
+      <div className="avatar-loader" aria-hidden="true">
+        <span className="avatar-loader-ring" />
+        <span className="avatar-loader-medallion" />
+        <span className="avatar-loader-glint" />
       </div>
       <p>твой любимый музыкальный проект</p>
     </main>

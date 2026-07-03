@@ -1,38 +1,38 @@
 @import url("https://fonts.googleapis.com/css2?family=Onest:wght@500;600;700;800;900&family=Russo+One&display=swap");
 
 :root {
-  --tg-bg: #050506;
-  --tg-surface: #14141a;
-  --tg-text: #f7f2df;
-  --tg-muted: #9b9487;
-  --tg-link: #fff500;
-  --tg-button: #fff500;
-  --tg-button-text: #09090b;
-  --bg: #050506;
-  --surface: #fff500;
-  --surface-dark: #121217;
-  --surface-glass: rgba(18, 18, 23, 0.76);
-  --paper: #17171d;
-  --paper-soft: rgba(22, 22, 28, 0.78);
-  --text: #fff9e8;
+  --tg-bg: #120505;
+  --tg-surface: #24100d;
+  --tg-text: #f7e2b8;
+  --tg-muted: #a98764;
+  --tg-link: #d6a65a;
+  --tg-button: #d6a65a;
+  --tg-button-text: #180807;
+  --bg: #120505;
+  --surface: #d6a65a;
+  --surface-dark: #1c0a09;
+  --surface-glass: rgba(41, 12, 10, 0.78);
+  --paper: #24100d;
+  --paper-soft: rgba(43, 13, 11, 0.82);
+  --text: #f7e2b8;
   --text-strong: #ffffff;
-  --muted: #9f988d;
-  --muted-2: #6d6870;
-  --line: rgba(255, 255, 255, 0.1);
-  --yellow: #fff500;
-  --magenta: #e600a8;
-  --wine: #8e1531;
-  --wine-dark: #3d0714;
-  --gold: #c99735;
-  --green: #20c47a;
-  --blue: #5d63ff;
-  --ok: #20c47a;
-  --warn: #ffb340;
-  --danger: #ff4965;
+  --muted: #a98764;
+  --muted-2: #76523e;
+  --line: rgba(230, 190, 125, 0.14);
+  --yellow: #d6a65a;
+  --magenta: #7e1325;
+  --wine: #7b1020;
+  --wine-dark: #2b0808;
+  --gold: #d6a65a;
+  --green: #5c7658;
+  --blue: #39423b;
+  --ok: #85a86f;
+  --warn: #d6a65a;
+  --danger: #d95656;
   --accent: var(--wine);
-  --accent-dark: #2b0a12;
-  --accent-soft: rgba(230, 0, 168, 0.16);
-  --accent-ink: #09090b;
+  --accent-dark: #2b0808;
+  --accent-soft: rgba(123, 16, 32, 0.22);
+  --accent-ink: #180807;
   --radius-xs: 10px;
   --radius-sm: 14px;
   --radius-md: 22px;
@@ -61,9 +61,9 @@ body {
   margin: 0;
   overflow-x: hidden;
   background:
-    linear-gradient(115deg, rgba(142, 21, 49, 0.52) 0 12%, transparent 34%),
-    linear-gradient(78deg, transparent 0 28%, rgba(230, 0, 168, 0.34) 52%, transparent 82%),
-    linear-gradient(180deg, #050506 0%, #08080c 45%, #030304 100%);
+    radial-gradient(circle at 18% 0%, rgba(123, 16, 32, 0.72), transparent 34%),
+    radial-gradient(circle at 88% 16%, rgba(214, 166, 90, 0.16), transparent 34%),
+    linear-gradient(180deg, #160606 0%, #0d0505 48%, #050303 100%);
 }
 
 body::before {
@@ -73,28 +73,27 @@ body::before {
   z-index: -3;
   pointer-events: none;
   background:
-    conic-gradient(from 226deg at 76% 38%, transparent 0deg, rgba(255, 245, 0, 0.68) 40deg, rgba(230, 0, 168, 0.42) 88deg, transparent 150deg),
-    linear-gradient(90deg, #050506 0 18%, transparent 48%, rgba(0, 0, 0, 0.86) 100%);
-  filter: blur(34px) saturate(1.18);
-  opacity: 0.9;
+    radial-gradient(circle at 74% 28%, rgba(214, 166, 90, 0.18), transparent 36%),
+    radial-gradient(circle at 28% 74%, rgba(123, 16, 32, 0.44), transparent 44%),
+    linear-gradient(90deg, #140505 0 24%, transparent 52%, rgba(0, 0, 0, 0.74) 100%);
+  filter: blur(28px) saturate(1.08);
+  opacity: 1;
 }
 
 body::after {
   content: "";
   position: fixed;
-  top: -12vh;
-  right: -16vw;
-  bottom: -20vh;
+  top: -24vh;
+  right: -22vw;
+  bottom: -24vh;
   z-index: -2;
-  width: min(82vw, 980px);
+  width: min(70vw, 820px);
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(5, 5, 6, 0.18), rgba(5, 5, 6, 0.82)),
-    url("./assets/kover-carpet.svg") center / cover no-repeat;
-  filter: saturate(1.15) contrast(1.06);
-  opacity: 0.28;
-  transform: rotate(-8deg);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 78%, transparent 100%);
+    radial-gradient(circle, rgba(214, 166, 90, 0.14), transparent 64%),
+    linear-gradient(90deg, transparent, rgba(20, 5, 5, 0.68));
+  filter: blur(18px);
+  opacity: 0.72;
 }
 
 button,
@@ -132,9 +131,9 @@ input::placeholder {
 }
 
 input:focus {
-  border-color: rgba(255, 245, 0, 0.7);
+  border-color: rgba(214, 166, 90, 0.76);
   box-shadow:
-    0 0 0 4px rgba(255, 245, 0, 0.12),
+    0 0 0 4px rgba(214, 166, 90, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -195,17 +194,17 @@ tr:hover td {
 }
 
 .member-shell {
-  --accent: #e600a8;
-  --accent-dark: #3b062d;
-  --accent-soft: rgba(230, 0, 168, 0.18);
-  --accent-ink: #09090b;
+  --accent: #7b1020;
+  --accent-dark: #2b0808;
+  --accent-soft: rgba(123, 16, 32, 0.24);
+  --accent-ink: #180807;
 }
 
 .admin-shell {
-  --accent: #20c47a;
-  --accent-dark: #062417;
-  --accent-soft: rgba(32, 196, 122, 0.18);
-  --accent-ink: #07120d;
+  --accent: #8b1b2a;
+  --accent-dark: #2b0808;
+  --accent-soft: rgba(139, 27, 42, 0.24);
+  --accent-ink: #180807;
 }
 
 .screen-state {
@@ -229,121 +228,78 @@ tr:hover td {
   padding: 30px;
   color: var(--text-strong);
   background:
-    conic-gradient(from 230deg at 58% 48%, transparent 0deg, rgba(255, 245, 0, 0.78) 42deg, rgba(230, 0, 168, 0.56) 96deg, transparent 160deg),
-    linear-gradient(90deg, #050506 0 42%, #140016 100%);
+    radial-gradient(circle at 50% 42%, rgba(214, 166, 90, 0.2), transparent 34%),
+    radial-gradient(circle at 50% 86%, rgba(123, 16, 32, 0.42), transparent 44%),
+    linear-gradient(180deg, #180707, #070303 82%);
 }
 
 .loading-screen p {
   width: min(420px, 92vw);
   margin: 0;
   color: #ffffff;
-  font-size: clamp(26px, 7vw, 52px);
+  font-size: clamp(24px, 6vw, 44px);
   font-weight: 900;
   letter-spacing: 0;
   line-height: 0.98;
   text-align: center;
   text-transform: uppercase;
   text-shadow:
-    0 0 22px rgba(230, 0, 168, 0.62),
+    0 0 22px rgba(214, 166, 90, 0.34),
     0 8px 32px rgba(0, 0, 0, 0.42);
 }
 
-.rug-roll-loader {
+.avatar-loader {
   position: relative;
-  width: min(70vw, 320px);
-  height: min(72vw, 320px);
-  min-height: 280px;
+  width: min(72vw, 330px);
+  height: min(72vw, 330px);
+  min-height: 260px;
   display: grid;
   place-items: center;
-  filter: drop-shadow(0 26px 52px rgba(0, 0, 0, 0.46));
+  filter: drop-shadow(0 28px 56px rgba(0, 0, 0, 0.5));
 }
 
-.rug-roll-core {
+.avatar-loader-ring {
   position: absolute;
-  top: 2px;
-  z-index: 3;
-  width: 82%;
-  height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  inset: 4%;
+  border: 2px solid rgba(214, 166, 90, 0.36);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 14px rgba(214, 166, 90, 0.035),
+    inset 0 0 34px rgba(214, 166, 90, 0.12);
+  animation: avatarHalo 2600ms ease-in-out infinite;
+}
+
+.avatar-loader-medallion {
+  position: absolute;
+  inset: 11%;
+  border: 1px solid rgba(245, 206, 142, 0.42);
   border-radius: 999px;
   background:
-    radial-gradient(circle at 18% 50%, #fff500 0 7px, transparent 8px),
-    radial-gradient(circle at 82% 50%, #fff500 0 7px, transparent 8px),
-    linear-gradient(90deg, #29000f, #8e1531 48%, #210009);
+    linear-gradient(180deg, rgba(255, 235, 174, 0.1), rgba(55, 9, 9, 0.12)),
+    url("./assets/kover-bot-avatar.jpg") center / cover no-repeat;
   box-shadow:
-    inset 0 8px 14px rgba(255, 255, 255, 0.16),
-    inset 0 -12px 18px rgba(0, 0, 0, 0.34);
+    inset 0 0 0 8px rgba(255, 232, 182, 0.06),
+    0 0 90px rgba(123, 16, 32, 0.46);
+  animation: avatarFloat 2600ms cubic-bezier(0.7, 0, 0.2, 1) infinite;
 }
 
-.rug-roll-core::before,
-.rug-roll-core::after {
-  content: "";
+.avatar-loader-glint {
   position: absolute;
-  top: 4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: radial-gradient(circle, #fff500 0 5px, #e600a8 6px 10px, #08080c 11px);
-}
-
-.rug-roll-core::before {
-  left: -6px;
-}
-
-.rug-roll-core::after {
-  right: -6px;
-}
-
-.rolling-rug {
-  position: absolute;
-  top: 28px;
-  width: min(64vw, 248px);
-  height: min(64vw, 248px);
-  min-height: 230px;
-  display: grid;
-  place-items: center;
+  inset: 11%;
   overflow: hidden;
-  border: 1px solid rgba(255, 245, 0, 0.35);
-  border-radius: 26px;
-  transform-origin: 50% 0;
-  background:
-    linear-gradient(180deg, rgba(255, 245, 0, 0.1), rgba(230, 0, 168, 0.08)),
-    url("./assets/kover-carpet.svg") center / cover no-repeat;
-  box-shadow:
-    inset 0 0 0 8px rgba(255, 245, 0, 0.12),
-    0 28px 70px rgba(230, 0, 168, 0.24);
-  animation: rugUnroll 2200ms ease-in-out infinite;
+  border-radius: 999px;
 }
 
-.rolling-rug::before {
+.avatar-loader-glint::before {
   content: "";
   position: absolute;
-  inset: 20px;
-  border: 1px solid rgba(255, 249, 232, 0.26);
-  border-radius: 18px;
-  pointer-events: none;
-}
-
-.rolling-rug::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(135deg, rgba(255, 245, 0, 0.2), transparent 45%, rgba(230, 0, 168, 0.22));
-  mix-blend-mode: screen;
-}
-
-.rug-logo-script {
-  position: relative;
-  z-index: 1;
-  color: #ffffff;
-  font-family: "Russo One", Onest, system-ui, sans-serif;
-  font-size: clamp(44px, 13vw, 74px);
-  line-height: 1;
-  text-shadow:
-    0 0 16px rgba(255, 245, 0, 0.54),
-    0 0 36px rgba(230, 0, 168, 0.56);
-  transform: rotate(-4deg);
+  top: -20%;
+  bottom: -20%;
+  left: -70%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 235, 174, 0.28), transparent);
+  transform: rotate(20deg);
+  animation: avatarGlint 2600ms ease-in-out infinite;
 }
 
 .error-state {
@@ -391,7 +347,7 @@ tr:hover td {
   border-radius: 36px;
   padding: 30px;
   background:
-    linear-gradient(106deg, rgba(5, 5, 6, 0.98) 0 36%, rgba(56, 4, 44, 0.78) 62%, rgba(5, 5, 6, 0.94) 100%),
+    linear-gradient(106deg, rgba(28, 8, 8, 0.98) 0 35%, rgba(105, 17, 30, 0.78) 62%, rgba(10, 4, 4, 0.96) 100%),
     var(--paper);
   box-shadow: var(--shadow-soft);
   isolation: isolate;
@@ -404,28 +360,28 @@ tr:hover td {
   z-index: -2;
   pointer-events: none;
   background:
-    conic-gradient(from 238deg at 67% 43%, transparent 0deg, rgba(255, 245, 0, 0.84) 45deg, rgba(230, 0, 168, 0.58) 104deg, transparent 176deg),
+    conic-gradient(from 238deg at 67% 43%, transparent 0deg, rgba(214, 166, 90, 0.5) 45deg, rgba(123, 16, 32, 0.7) 104deg, transparent 176deg),
     linear-gradient(90deg, rgba(0, 0, 0, 0.9), transparent 68%);
-  filter: blur(24px) saturate(1.18);
+  filter: blur(24px) saturate(1.1);
 }
 
 .topbar::after {
   content: "";
   position: absolute;
-  right: -86px;
-  bottom: -110px;
+  right: -54px;
+  bottom: -124px;
   z-index: -1;
-  width: min(54vw, 560px);
-  height: min(54vw, 560px);
-  border-radius: 46%;
+  width: min(54vw, 520px);
+  height: min(54vw, 520px);
+  border-radius: 999px;
   pointer-events: none;
   background:
-    linear-gradient(130deg, rgba(255, 245, 0, 0.26), rgba(230, 0, 168, 0.12)),
-    url("./assets/kover-carpet.svg") center / cover no-repeat;
-  filter: saturate(1.18) contrast(1.08);
-  opacity: 0.72;
-  transform: rotate(-10deg);
-  mask-image: linear-gradient(120deg, #000 0 58%, transparent 86%);
+    linear-gradient(130deg, rgba(214, 166, 90, 0.1), rgba(43, 8, 8, 0.24)),
+    url("./assets/kover-bot-avatar.jpg") center / cover no-repeat;
+  filter: saturate(1.02) contrast(1.05);
+  opacity: 0.76;
+  transform: rotate(-7deg);
+  mask-image: linear-gradient(120deg, #000 0 54%, transparent 84%);
 }
 
 .brand-lockup {
@@ -456,7 +412,7 @@ tr:hover td {
   line-height: 0.92;
   text-transform: uppercase;
   text-shadow:
-    0 0 30px rgba(230, 0, 168, 0.36),
+    0 0 30px rgba(214, 166, 90, 0.18),
     0 14px 54px rgba(0, 0, 0, 0.45);
 }
 
@@ -483,7 +439,7 @@ tr:hover td {
   position: absolute;
   width: 130px;
   height: 58px;
-  background: var(--yellow);
+  background: var(--gold);
   clip-path: polygon(
     0 47%,
     20% 38%,
@@ -504,13 +460,13 @@ tr:hover td {
     8% 92%,
     26% 61%
   );
-  filter: drop-shadow(0 0 22px rgba(255, 245, 0, 0.42));
+  filter: drop-shadow(0 0 22px rgba(214, 166, 90, 0.34));
 }
 
 .kover-word {
   position: relative;
   z-index: 1;
-  color: #08080c;
+  color: #1b0807;
   font-family: "Russo One", Onest, system-ui, sans-serif;
   font-size: 31px;
   font-weight: 400;
@@ -533,16 +489,16 @@ tr:hover td {
 
 .hero-rug {
   position: absolute;
-  inset: 12% 7% 20% 15%;
-  border: 1px solid rgba(255, 245, 0, 0.38);
-  border-radius: 34px;
+  inset: 4% 6% 10% 9%;
+  border: 1px solid rgba(245, 206, 142, 0.38);
+  border-radius: 999px;
   background:
-    linear-gradient(135deg, rgba(255, 245, 0, 0.18), rgba(230, 0, 168, 0.14)),
-    url("./assets/kover-carpet.svg") center / cover no-repeat;
+    linear-gradient(135deg, rgba(214, 166, 90, 0.1), rgba(43, 8, 8, 0.1)),
+    url("./assets/kover-bot-avatar.jpg") center / cover no-repeat;
   box-shadow:
     0 0 0 10px rgba(255, 255, 255, 0.035),
-    0 28px 90px rgba(230, 0, 168, 0.32);
-  transform: rotate(-8deg);
+    0 28px 90px rgba(123, 16, 32, 0.34);
+  transform: rotate(-6deg);
 }
 
 .hero-vinyl {
@@ -554,7 +510,7 @@ tr:hover td {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background:
-    radial-gradient(circle, var(--yellow) 0 11%, #08080c 12% 24%, transparent 25%),
+    radial-gradient(circle, var(--gold) 0 11%, #1b0807 12% 24%, transparent 25%),
     conic-gradient(from 0deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02));
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
   opacity: 0.88;
@@ -569,26 +525,29 @@ tr:hover td {
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: var(--yellow);
-  color: #08080c;
+  background: var(--gold);
+  color: #180807;
   box-shadow:
-    0 0 0 12px rgba(255, 245, 0, 0.08),
-    0 18px 54px rgba(255, 245, 0, 0.26);
+    0 0 0 12px rgba(214, 166, 90, 0.1),
+    0 18px 54px rgba(214, 166, 90, 0.24);
 }
 
 .role-toggle {
   position: relative;
-  z-index: 3;
+  z-index: 6;
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   min-width: 250px;
-  padding: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  padding: 5px;
+  border: 1px solid rgba(245, 206, 142, 0.18);
   border-radius: 999px;
-  background: rgba(9, 9, 12, 0.58);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: rgba(31, 10, 8, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 206, 142, 0.08),
+    0 18px 48px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(18px);
 }
 
@@ -606,12 +565,14 @@ tr:hover td {
 }
 
 .role-option {
-  min-height: 48px;
+  min-width: 0;
+  min-height: 50px;
   border-radius: 999px;
-  padding: 0 14px;
+  padding: 0 12px;
   background: transparent;
-  color: rgba(255, 249, 232, 0.62);
+  color: rgba(247, 226, 184, 0.6);
   font-weight: 900;
+  white-space: nowrap;
   transition:
     transform 160ms ease,
     color 160ms ease,
@@ -620,8 +581,8 @@ tr:hover td {
 
 .role-option.active {
   color: var(--accent-ink);
-  background: var(--yellow);
-  box-shadow: 0 10px 28px rgba(255, 245, 0, 0.2);
+  background: linear-gradient(180deg, #f0c982, var(--gold));
+  box-shadow: 0 10px 28px rgba(214, 166, 90, 0.22);
   transform: translateY(-1px);
 }
 
@@ -672,11 +633,11 @@ tr:hover td {
   margin: 2px 0 10px 2px;
   border-radius: 22px;
   background:
-    linear-gradient(135deg, rgba(255, 245, 0, 0.44), rgba(230, 0, 168, 0.26)),
-    url("./assets/kover-carpet.svg") center / cover no-repeat;
+    linear-gradient(135deg, rgba(214, 166, 90, 0.18), rgba(43, 8, 8, 0.18)),
+    url("./assets/kover-bot-avatar.jpg") center / cover no-repeat;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 18px 42px rgba(230, 0, 168, 0.18);
+    0 18px 42px rgba(123, 16, 32, 0.22);
   transform: rotate(-5deg);
 }
 
@@ -713,9 +674,9 @@ tr:hover td {
 
 .nav-card.active {
   color: #ffffff;
-  border-color: rgba(255, 245, 0, 0.2);
+  border-color: rgba(214, 166, 90, 0.26);
   background:
-    linear-gradient(90deg, rgba(255, 245, 0, 0.2), rgba(230, 0, 168, 0.08)),
+    linear-gradient(90deg, rgba(214, 166, 90, 0.16), rgba(123, 16, 32, 0.16)),
     rgba(255, 255, 255, 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -733,9 +694,9 @@ tr:hover td {
 }
 
 .nav-card.active .nav-icon {
-  color: #09090b;
-  background: var(--yellow);
-  box-shadow: 0 0 26px rgba(255, 245, 0, 0.24);
+  color: #180807;
+  background: var(--gold);
+  box-shadow: 0 0 26px rgba(214, 166, 90, 0.22);
 }
 
 .nav-label {
@@ -770,7 +731,7 @@ tr:hover td {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(110deg, transparent 0 56%, rgba(255, 245, 0, 0.08) 64%, transparent 76%),
+    linear-gradient(110deg, transparent 0 56%, rgba(214, 166, 90, 0.08) 64%, transparent 76%),
     linear-gradient(225deg, var(--accent-soft), transparent 34%);
   opacity: 0.82;
 }
@@ -792,7 +753,7 @@ tr:hover td {
   border-radius: 28px;
   padding: 20px;
   background:
-    linear-gradient(120deg, rgba(255, 245, 0, 0.17), rgba(230, 0, 168, 0.1) 42%, rgba(255, 255, 255, 0.04)),
+    linear-gradient(120deg, rgba(214, 166, 90, 0.14), rgba(123, 16, 32, 0.18) 42%, rgba(255, 255, 255, 0.04)),
     rgba(255, 255, 255, 0.035);
 }
 
@@ -803,7 +764,7 @@ tr:hover td {
   letter-spacing: 0;
   line-height: 0.9;
   text-shadow:
-    0 0 34px rgba(255, 245, 0, 0.26),
+    0 0 34px rgba(214, 166, 90, 0.2),
     0 22px 60px rgba(0, 0, 0, 0.42);
 }
 
@@ -924,11 +885,11 @@ label {
 }
 
 .primary-button {
-  background: var(--yellow);
-  color: #09090b;
+  background: linear-gradient(180deg, #f0c982, var(--gold));
+  color: #180807;
   box-shadow:
-    0 0 0 9px rgba(255, 245, 0, 0.07),
-    0 16px 44px rgba(255, 245, 0, 0.18);
+    0 0 0 9px rgba(214, 166, 90, 0.08),
+    0 16px 44px rgba(214, 166, 90, 0.16);
 }
 
 .primary-button:hover,
@@ -952,11 +913,11 @@ label {
 
 .notice {
   margin-top: 14px;
-  border: 1px solid rgba(255, 245, 0, 0.24);
+  border: 1px solid rgba(214, 166, 90, 0.28);
   border-radius: 18px;
   padding: 13px 15px;
-  color: #fff8b2;
-  background: rgba(255, 245, 0, 0.08);
+  color: #f4d59b;
+  background: rgba(214, 166, 90, 0.08);
   font-weight: 800;
 }
 
@@ -1026,9 +987,9 @@ label {
 }
 
 .chip.selected {
-  border-color: rgba(255, 245, 0, 0.38);
-  background: rgba(255, 245, 0, 0.12);
-  color: #fff8b2;
+  border-color: rgba(214, 166, 90, 0.42);
+  background: rgba(214, 166, 90, 0.12);
+  color: #f4d59b;
 }
 
 .member-form {
@@ -1055,7 +1016,7 @@ label {
   border-radius: 26px;
   padding: 16px;
   background:
-    linear-gradient(110deg, rgba(255, 245, 0, 0.055), transparent 44%),
+    linear-gradient(110deg, rgba(214, 166, 90, 0.055), transparent 44%),
     rgba(255, 255, 255, 0.045);
 }
 
@@ -1106,21 +1067,52 @@ label {
   margin-top: 12px;
 }
 
-@keyframes rugUnroll {
+@keyframes avatarHalo {
   0% {
-    opacity: 0.78;
-    transform: scaleY(0.14);
+    opacity: 0.56;
+    transform: scale(0.94) rotate(0deg);
   }
 
-  42%,
-  74% {
+  52% {
     opacity: 1;
-    transform: scaleY(1);
+    transform: scale(1.02) rotate(8deg);
   }
 
   100% {
-    opacity: 0.78;
-    transform: scaleY(0.14);
+    opacity: 0.56;
+    transform: scale(0.94) rotate(0deg);
+  }
+}
+
+@keyframes avatarFloat {
+  0% {
+    transform: translateY(8px) scale(0.96);
+  }
+
+  52% {
+    transform: translateY(-4px) scale(1);
+  }
+
+  100% {
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@keyframes avatarGlint {
+  0%,
+  36% {
+    left: -70%;
+    opacity: 0;
+  }
+
+  52% {
+    opacity: 1;
+  }
+
+  78%,
+  100% {
+    left: 130%;
+    opacity: 0;
   }
 }
 
@@ -1157,7 +1149,6 @@ label {
     opacity: 0.74;
   }
 
-  .role-toggle,
   .toolbar input,
   .primary-button,
   .ghost-button {
@@ -1166,9 +1157,10 @@ label {
 
   .role-toggle {
     position: absolute;
-    right: 16px;
-    bottom: 16px;
-    left: 16px;
+    right: 20px;
+    bottom: 18px;
+    left: 20px;
+    width: auto;
     min-width: 0;
   }
 
@@ -1245,20 +1237,15 @@ label {
     font-size: clamp(24px, 8vw, 34px);
   }
 
-  .rug-roll-loader {
+  .avatar-loader {
     width: min(80vw, 280px);
     height: min(80vw, 280px);
-  }
-
-  .rolling-rug {
-    width: min(68vw, 230px);
-    height: min(68vw, 230px);
   }
 }
 
 @media (max-width: 420px) {
   .topbar {
-    min-height: 306px;
+    min-height: 318px;
   }
 
   .topbar h1 {
@@ -1284,5 +1271,22 @@ label {
   .hero-play {
     width: 58px;
     height: 58px;
+  }
+
+  .role-toggle {
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+  }
+
+  .role-option {
+    min-height: 48px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+
+  .control-icon {
+    width: 28px;
+    height: 28px;
   }
 }
