@@ -123,7 +123,7 @@ function LoadingScreen() {
           <span className="rug-logo-script">KOVER</span>
         </div>
       </div>
-      <p>раскатываем уют</p>
+      <p>твой любимый музыкальный проект</p>
     </main>
   );
 }
@@ -181,7 +181,6 @@ function NavDock<T extends string>({
         >
           <span className="nav-icon">{item.icon}</span>
           <span className="nav-label">{item.label}</span>
-          <span className="nav-glow" aria-hidden="true" />
         </button>
       ))}
     </nav>
