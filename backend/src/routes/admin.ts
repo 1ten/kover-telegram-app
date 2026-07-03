@@ -257,13 +257,8 @@ adminRouter.post(
 adminRouter.post(
   "/deferrals/:id/reject",
   asyncRoute(async (req, res) => {
-    const request = await prisma.deferralRequest.update({
+    const request = await prisma.deferralRequest.delete({
       where: { id: req.params.id },
-      data: {
-        status: "rejected",
-        resolvedAt: new Date(),
-        adminComment: typeof req.body?.adminComment === "string" ? req.body.adminComment : null
-      },
       include: { musician: true }
     });
 
@@ -278,7 +273,16 @@ adminRouter.post(
       musicianId: request.musicianId
     });
 
-    res.json({ request, musicianName: resolveName(request.musician) });
+    res.json({
+      request: {
+        ...request,
+        status: "rejected",
+        resolvedAt: new Date(),
+        adminComment: typeof req.body?.adminComment === "string" ? req.body.adminComment : null
+      },
+      deleted: true,
+      musicianName: resolveName(request.musician)
+    });
   })
 );
 

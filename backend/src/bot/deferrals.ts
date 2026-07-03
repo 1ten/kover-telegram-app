@@ -15,14 +15,20 @@ export const registerDeferralCallbacks = (bot: Bot) => {
     const action = ctx.match[1] as "approve" | "reject";
     const requestId = ctx.match[2];
     const status = action === "approve" ? "approved" : "rejected";
-    const request = await prisma.deferralRequest.update({
-      where: { id: requestId },
-      data: {
-        status,
-        resolvedAt: new Date()
-      },
-      include: { musician: true }
-    });
+    const request =
+      status === "approved"
+        ? await prisma.deferralRequest.update({
+            where: { id: requestId },
+            data: {
+              status,
+              resolvedAt: new Date()
+            },
+            include: { musician: true }
+          })
+        : await prisma.deferralRequest.delete({
+            where: { id: requestId },
+            include: { musician: true }
+          });
 
     if (status === "approved") {
       await prisma.payment.updateMany({
