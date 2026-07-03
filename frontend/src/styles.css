@@ -1052,6 +1052,10 @@ label {
   margin: 12px 0;
 }
 
+.compact-grid .wide-field {
+  grid-column: span 2;
+}
+
 label {
   display: grid;
   gap: 7px;
@@ -1227,6 +1231,10 @@ label {
   .compact-grid,
   .member-form {
     grid-template-columns: 1fr;
+  }
+
+  .compact-grid .wide-field {
+    grid-column: 1;
   }
 
   .payment-hero h2 {

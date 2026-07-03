@@ -15,11 +15,15 @@ adminRouter.use(requireAdmin);
 
 const instrumentSchema = z.enum(["mic", "guitar", "bass", "drums", "synth", "teacher"]);
 const telegramIdSchema = z.string().regex(/^\d+$/).transform((value) => BigInt(value));
+const optionalNameSchema = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  z.string().trim().min(1).nullable().optional()
+);
 
 const musicianCreateSchema = z.object({
   telegramId: telegramIdSchema,
-  username: z.string().trim().min(1).optional(),
-  fullName: z.string().trim().min(1).optional(),
+  username: optionalNameSchema,
+  fullName: optionalNameSchema,
   isAdmin: z.boolean().optional(),
   monthlyPrice: z.coerce.number().int().positive().default(5000),
   paymentDay: z.coerce.number().int().min(1).max(31).optional(),

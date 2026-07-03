@@ -40,7 +40,7 @@ export const startEmbeddedBot = async () => {
         where: { id: existing.id },
         data: {
           username: ctx.from?.username,
-          fullName,
+          fullName: existing.fullName ?? fullName,
           isAdmin: existing.isAdmin || isAdmin
         }
       });

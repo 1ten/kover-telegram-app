@@ -703,6 +703,7 @@ function AdminMembers({ onDataChange }: { onDataChange: () => Promise<void> }) {
 
 function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () => Promise<void> }) {
   const [form, setForm] = useState({
+    fullName: musician.fullName ?? "",
     monthlyPrice: musician.monthlyPrice,
     paymentDay: musician.paymentDay,
     gracePeriodDays: musician.gracePeriodDays,
@@ -711,10 +712,25 @@ function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () =
     status: musician.status
   });
 
+  useEffect(() => {
+    setForm({
+      fullName: musician.fullName ?? "",
+      monthlyPrice: musician.monthlyPrice,
+      paymentDay: musician.paymentDay,
+      gracePeriodDays: musician.gracePeriodDays,
+      gracePeriodHours: musician.gracePeriodHours,
+      instruments: musician.instruments,
+      status: musician.status
+    });
+  }, [musician]);
+
   const save = async () => {
     await api(`/api/admin/musicians/${musician.id}`, {
       method: "PATCH",
-      body: form
+      body: {
+        ...form,
+        fullName: form.fullName.trim() || null
+      }
     });
     await onSaved();
   };
@@ -755,6 +771,14 @@ function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () =
         </div>
       </div>
       <div className="compact-grid">
+        <label className="wide-field">
+          Имя
+          <input
+            value={form.fullName}
+            placeholder="Например, Артем"
+            onChange={(event) => setForm({ ...form, fullName: event.target.value })}
+          />
+        </label>
         <label>
           Цена
           <input

@@ -15,8 +15,8 @@ type MockOptions = {
 
 type MusicianDraft = {
   telegramId?: string;
-  username?: string;
-  fullName?: string;
+  username?: string | null;
+  fullName?: string | null;
   isAdmin?: boolean;
   monthlyPrice?: number;
   paymentDay?: number;

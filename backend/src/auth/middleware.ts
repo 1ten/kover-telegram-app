@@ -39,7 +39,7 @@ export const authenticateTelegram = async (req: Request, res: Response, next: Ne
           where: { id: existing.id },
           data: {
             username: user.username ?? existing.username,
-            fullName,
+            fullName: existing.fullName ?? fullName,
             isAdmin: existing.isAdmin || isEnvAdmin
           }
         })
