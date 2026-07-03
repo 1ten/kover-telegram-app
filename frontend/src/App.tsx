@@ -312,6 +312,13 @@ export function App() {
             <h1>{mode === "admin" ? "Руководитель" : displayName(summary.musician)}</h1>
           </div>
         </div>
+        <div className="hero-visual" aria-hidden="true">
+          <span className="hero-rug" />
+          <span className="hero-vinyl" />
+          <span className="hero-play">
+            <Music size={28} />
+          </span>
+        </div>
         {isAdmin && <RoleToggle mode={mode} onChange={setMode} />}
       </header>
 
