@@ -29,6 +29,10 @@ export class YooKassaProvider implements PaymentProvider {
   ).toString("base64")}`;
 
   async createPayment(input: CreatePaymentInput): Promise<CreatedPayment> {
+    if (!input.returnUrl) {
+      throw new Error("YOOKASSA_RETURN_URL is required for YooKassa payments");
+    }
+
     const response = await fetch(`${this.baseUrl}/payments`, {
       method: "POST",
       headers: {
@@ -101,5 +105,3 @@ export class YooKassaProvider implements PaymentProvider {
     };
   }
 }
-
-export const paymentProvider = new YooKassaProvider();

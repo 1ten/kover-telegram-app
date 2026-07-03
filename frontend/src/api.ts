@@ -11,8 +11,12 @@ export const api = async <T>(path: string, options: RequestOptions = {}): Promis
   const initData = getInitData();
   const forceDemo = import.meta.env.VITE_DEMO_MODE === "true";
 
-  if (!initData || forceDemo) {
+  if (forceDemo) {
     return demoApi<T>(path, options);
+  }
+
+  if (!initData) {
+    throw new Error("Открой приложение через Telegram-бота. В обычном браузере реальный режим не может определить пользователя.");
   }
 
   const response = await fetch(`${API_URL}${path}`, {

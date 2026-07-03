@@ -4,7 +4,7 @@ import { isIpAllowed } from "../lib/ipAllowlist.js";
 import { asyncRoute } from "../lib/asyncRoute.js";
 import { logger } from "../lib/logger.js";
 import { prisma } from "../lib/prisma.js";
-import { paymentProvider } from "../payments/yookassaProvider.js";
+import { paymentProvider } from "../payments/provider.js";
 import { notifyParticipant } from "../telegram/notify.js";
 
 export const webhooksRouter = Router();

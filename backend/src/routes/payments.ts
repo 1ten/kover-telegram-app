@@ -5,7 +5,7 @@ import { asyncRoute } from "../lib/asyncRoute.js";
 import { getCurrentPeriod } from "../lib/dates.js";
 import { logger } from "../lib/logger.js";
 import { prisma } from "../lib/prisma.js";
-import { paymentProvider } from "../payments/yookassaProvider.js";
+import { paymentProvider } from "../payments/provider.js";
 
 export const paymentsRouter = Router();
 
@@ -96,7 +96,8 @@ paymentsRouter.post(
 
     res.status(201).json({
       payment: updatedPayment,
-      confirmationUrl: providerPayment.confirmationUrl
+      confirmationUrl: providerPayment.confirmationUrl,
+      manualPayment: !providerPayment.confirmationUrl
     });
   })
 );

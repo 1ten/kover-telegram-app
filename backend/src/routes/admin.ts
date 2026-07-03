@@ -43,6 +43,12 @@ const settingsUpdateSchema = z.object({
   reminderTime: z.string().regex(/^\d{2}:\d{2}$/).optional()
 });
 
+const manualPaymentSchema = z.object({
+  musicianId: z.string().uuid(),
+  period: z.string().regex(/^\d{4}-\d{2}$/),
+  status: z.enum(["paid", "pending", "failed"]).default("paid")
+});
+
 const resolveName = (musician: { fullName: string | null; username: string | null; telegramId: bigint }) =>
   musician.fullName || (musician.username ? `@${musician.username}` : musician.telegramId.toString());
 
@@ -163,6 +169,51 @@ adminRouter.get(
     });
 
     res.json({ requests });
+  })
+);
+
+adminRouter.post(
+  "/payments/manual-status",
+  asyncRoute(async (req, res) => {
+    const body = manualPaymentSchema.parse(req.body);
+    const musician = await prisma.musician.findUniqueOrThrow({
+      where: { id: body.musicianId }
+    });
+
+    const payment = await prisma.payment.upsert({
+      where: {
+        musicianId_period: {
+          musicianId: musician.id,
+          period: body.period
+        }
+      },
+      create: {
+        musicianId: musician.id,
+        period: body.period,
+        amount: musician.monthlyPrice,
+        status: body.status,
+        paidAt: body.status === "paid" ? new Date() : null
+      },
+      update: {
+        amount: musician.monthlyPrice,
+        status: body.status,
+        paidAt: body.status === "paid" ? new Date() : null
+      }
+    });
+
+    logger.info("manual_payment_status_updated", {
+      adminId: req.musician!.id,
+      musicianId: musician.id,
+      paymentId: payment.id,
+      period: payment.period,
+      status: payment.status
+    });
+
+    if (body.status === "paid") {
+      await notifyParticipant(musician.telegramId, `Оплата за ${body.period} отмечена как полученная.`);
+    }
+
+    res.json({ payment });
   })
 );
 

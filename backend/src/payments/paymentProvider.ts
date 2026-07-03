@@ -1,14 +1,14 @@
 export type CreatePaymentInput = {
   amount: number;
   description: string;
-  returnUrl: string;
+  returnUrl?: string;
   metadata: Record<string, string>;
 };
 
 export type CreatedPayment = {
   providerPaymentId: string;
   status: string;
-  confirmationUrl: string;
+  confirmationUrl?: string;
 };
 
 export type ProviderPaymentStatus = {

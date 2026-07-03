@@ -258,17 +258,26 @@ function MemberApp({ summary, refresh }: { summary: MemberSummary; refresh: () =
 
 function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const remaining = useRemaining(summary.graceEndsAt);
 
   const pay = async () => {
     setBusy(true);
+    setMessage(null);
     try {
-      const result = await api<{ confirmationUrl?: string; alreadyPaid?: boolean }>("/api/payments", {
+      const result = await api<{
+        confirmationUrl?: string;
+        alreadyPaid?: boolean;
+        manualPayment?: boolean;
+      }>("/api/payments", {
         method: "POST",
         body: { period: summary.period }
       });
       if (result.confirmationUrl) {
         openExternal(result.confirmationUrl);
+      }
+      if (result.manualPayment) {
+        setMessage("Счёт создан. После перевода админ отметит оплату вручную.");
       }
       await refresh();
     } finally {
@@ -312,7 +321,7 @@ function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: (
       <div className="action-row">
         <button className="primary-button" onClick={pay} disabled={busy || summary.status === "paid"}>
           <CreditCard size={18} />
-          Оплатить
+          {summary.payment ? "Обновить счёт" : "Создать счёт"}
         </button>
         <button
           className="ghost-button"
@@ -323,6 +332,8 @@ function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: (
           Запросить отсрочку
         </button>
       </div>
+
+      {message && <div className="notice">{message}</div>}
 
       {summary.deferral && (
         <div className="notice">
@@ -438,6 +449,7 @@ function AdminApp() {
 function AdminDashboard() {
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [rows, setRows] = useState<DashboardRow[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const result = await api<{ rows: DashboardRow[] }>(`/api/admin/dashboard?period=${period}`);
@@ -447,6 +459,23 @@ function AdminDashboard() {
   useEffect(() => {
     load().catch(console.error);
   }, [load]);
+
+  const setPaymentStatus = async (musicianId: string, status: "paid" | "pending") => {
+    setBusyId(musicianId);
+    try {
+      await api("/api/admin/payments/manual-status", {
+        method: "POST",
+        body: {
+          musicianId,
+          period,
+          status
+        }
+      });
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <section className="panel">
@@ -466,6 +495,7 @@ function AdminDashboard() {
               <th>Статус</th>
               <th>Сумма</th>
               <th>Дедлайн</th>
+              <th>Действие</th>
             </tr>
           </thead>
           <tbody>
@@ -486,6 +516,27 @@ function AdminDashboard() {
                 </td>
                 <td>{formatCurrency(row.amount)}</td>
                 <td>{formatDateTime(row.graceEndsAt)}</td>
+                <td>
+                  <div className="icon-actions">
+                    {row.status === "paid" ? (
+                      <button
+                        title="Вернуть в не оплачено"
+                        onClick={() => setPaymentStatus(row.musician.id, "pending")}
+                        disabled={busyId === row.musician.id}
+                      >
+                        <X size={18} />
+                      </button>
+                    ) : (
+                      <button
+                        title="Отметить оплачено"
+                        onClick={() => setPaymentStatus(row.musician.id, "paid")}
+                        disabled={busyId === row.musician.id}
+                      >
+                        <Check size={18} />
+                      </button>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
