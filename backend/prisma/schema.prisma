@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Instrument {
+  mic
+  guitar
+  bass
+  drums
+  synth
+  teacher
+}
+
+enum MusicianStatus {
+  active
+  archived
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  overdue
+  failed
+}
+
+enum DeferralStatus {
+  pending
+  approved
+  rejected
+}
+
+model Musician {
+  id               String         @id @default(uuid()) @db.Uuid
+  telegramId       BigInt         @unique @map("telegram_id")
+  username         String?
+  fullName         String?        @map("full_name")
+  isAdmin          Boolean        @default(false) @map("is_admin")
+  monthlyPrice     Int            @default(5000) @map("monthly_price")
+  paymentDay       Int            @default(25) @map("payment_day")
+  gracePeriodDays  Int?           @map("grace_period_days")
+  gracePeriodHours Int?           @map("grace_period_hours")
+  instruments      Instrument[]   @default([])
+  status           MusicianStatus @default(active)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  payments         Payment[]
+  deferralRequests DeferralRequest[]
+
+  @@map("musicians")
+}
+
+model Payment {
+  id                 String        @id @default(uuid()) @db.Uuid
+  musicianId         String        @map("musician_id") @db.Uuid
+  amount             Int
+  period             String
+  status             PaymentStatus @default(pending)
+  yookassaPaymentId  String?       @unique @map("yookassa_payment_id")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  paidAt             DateTime?     @map("paid_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  musician           Musician      @relation(fields: [musicianId], references: [id])
+
+  @@unique([musicianId, period])
+  @@index([period, status])
+  @@map("payments")
+}
+
+model DeferralRequest {
+  id            String         @id @default(uuid()) @db.Uuid
+  musicianId    String         @map("musician_id") @db.Uuid
+  period        String
+  status        DeferralStatus @default(pending)
+  requestedAt   DateTime       @default(now()) @map("requested_at")
+  resolvedAt    DateTime?      @map("resolved_at")
+  adminComment  String?        @map("admin_comment")
+
+  musician      Musician       @relation(fields: [musicianId], references: [id])
+
+  @@unique([musicianId, period])
+  @@index([status, period])
+  @@map("deferral_requests")
+}
+
+model Settings {
+  id                      String   @id @default("global")
+  defaultPaymentDay       Int      @default(25) @map("default_payment_day")
+  defaultGracePeriodDays  Int      @default(3) @map("default_grace_period_days")
+  defaultGracePeriodHours Int      @default(0) @map("default_grace_period_hours")
+  reminderDaysBefore      Int      @default(3) @map("reminder_days_before")
+  reminderTime            String   @default("10:00") @map("reminder_time")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}

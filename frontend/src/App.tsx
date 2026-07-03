@@ -1,0 +1,821 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Archive,
+  CalendarDays,
+  Check,
+  Clock,
+  CreditCard,
+  Drum,
+  GraduationCap,
+  Guitar,
+  History,
+  Mic,
+  Music,
+  RefreshCw,
+  Save,
+  Settings,
+  SlidersHorizontal,
+  UserPlus,
+  Users,
+  X
+} from "lucide-react";
+import { api } from "./api";
+import { openExternal } from "./telegram";
+import type {
+  DashboardRow,
+  DeferralRequest,
+  Instrument,
+  MemberSummary,
+  Musician,
+  Settings as AppSettings
+} from "./types";
+
+type RoleMode = "member" | "admin";
+type MemberTab = "pay" | "history" | "profile";
+type AdminTab = "dashboard" | "members" | "deferrals" | "settings";
+
+const instrumentLabels: Record<Instrument, string> = {
+  mic: "Вокал",
+  guitar: "Гитара",
+  bass: "Бас",
+  drums: "Барабаны",
+  synth: "Синтезатор",
+  teacher: "Преподаватель"
+};
+
+const instrumentOrder: Instrument[] = ["mic", "guitar", "bass", "drums", "synth", "teacher"];
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("ru-RU", {
+    style: "currency",
+    currency: "RUB",
+    maximumFractionDigits: 0
+  }).format(value);
+
+const formatDateTime = (value: string | null | undefined) =>
+  value
+    ? new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(value))
+    : "—";
+
+const displayName = (musician: Musician) =>
+  musician.fullName || (musician.username ? `@${musician.username}` : musician.telegramId);
+
+const statusCopy = {
+  paid: "Оплачено",
+  pending: "Не оплачено",
+  overdue: "Просрочено",
+  failed: "Ошибка"
+};
+
+function KoverMark() {
+  return (
+    <div className="kover-mark" aria-hidden="true">
+      <span className="kover-burst" />
+      <span className="kover-word">KOVER</span>
+    </div>
+  );
+}
+
+function BassIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M15.8 3.2 21 8.4l-1.5 1.5-1.3-1.3-4.5 4.5c1 2 .7 4.5-1 6.2-2.1 2.1-5.5 2.1-7.6 0s-2.1-5.5 0-7.6c1.7-1.7 4.2-2.1 6.2-1l4.5-4.5-1.4-1.4 1.4-1.6Z"
+        fill="currentColor"
+        opacity=".92"
+      />
+      <circle cx="8.8" cy="15.9" r="1.4" fill="var(--surface)" />
+    </svg>
+  );
+}
+
+function InstrumentIcon({ instrument }: { instrument: Instrument }) {
+  if (instrument === "mic") return <Mic size={18} />;
+  if (instrument === "guitar") return <Guitar size={18} />;
+  if (instrument === "bass") return <BassIcon />;
+  if (instrument === "drums") return <Drum size={18} />;
+  if (instrument === "synth") return <Music size={18} />;
+  return <GraduationCap size={18} />;
+}
+
+function StatusBadge({ status }: { status: keyof typeof statusCopy }) {
+  return <span className={`status-badge ${status}`}>{statusCopy[status]}</span>;
+}
+
+function InstrumentPicker({
+  value,
+  onChange
+}: {
+  value: Instrument[];
+  onChange: (value: Instrument[]) => void;
+}) {
+  const toggle = (instrument: Instrument) => {
+    onChange(
+      value.includes(instrument)
+        ? value.filter((item) => item !== instrument)
+        : [...value, instrument]
+    );
+  };
+
+  return (
+    <div className="instrument-picker">
+      {instrumentOrder.map((instrument) => (
+        <button
+          key={instrument}
+          type="button"
+          className={value.includes(instrument) ? "chip selected" : "chip"}
+          onClick={() => toggle(instrument)}
+          title={instrumentLabels[instrument]}
+        >
+          <InstrumentIcon instrument={instrument} />
+          <span>{instrumentLabels[instrument]}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function useRemaining(target: string) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return useMemo(() => {
+    const diff = Math.max(new Date(target).getTime() - now, 0);
+    const days = Math.floor(diff / 86_400_000);
+    const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+    return `${days} дн. ${hours} ч.`;
+  }, [now, target]);
+}
+
+export function App() {
+  const [summary, setSummary] = useState<MemberSummary | null>(null);
+  const [mode, setMode] = useState<RoleMode>("member");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSummary = useCallback(async () => {
+    setError(null);
+    const result = await api<MemberSummary>("/api/me/summary");
+    setSummary(result);
+    if (result.musician.isAdmin) {
+      setMode("admin");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSummary()
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [loadSummary]);
+
+  if (loading) {
+    return <main className="screen-state">KOVER</main>;
+  }
+
+  if (error || !summary) {
+    return (
+      <main className="screen-state error-state">
+        <p>{error || "Не удалось открыть приложение"}</p>
+        <button className="primary-button" onClick={() => window.location.reload()}>
+          <RefreshCw size={18} />
+          Обновить
+        </button>
+      </main>
+    );
+  }
+
+  const isAdmin = summary.musician.isAdmin;
+
+  return (
+    <main className="app-shell">
+      <header className="topbar">
+        <div className="brand-lockup">
+          <KoverMark />
+          <div>
+            <p className="eyebrow">репетиционный взнос</p>
+            <h1>{mode === "admin" ? "Руководитель" : displayName(summary.musician)}</h1>
+          </div>
+        </div>
+        {isAdmin && (
+          <div className="segment role-switch">
+            <button className={mode === "member" ? "active" : ""} onClick={() => setMode("member")}>
+              <CreditCard size={17} />
+              Участник
+            </button>
+            <button className={mode === "admin" ? "active" : ""} onClick={() => setMode("admin")}>
+              <SlidersHorizontal size={17} />
+              Админ
+            </button>
+          </div>
+        )}
+      </header>
+
+      {mode === "admin" && isAdmin ? (
+        <AdminApp />
+      ) : (
+        <MemberApp summary={summary} refresh={loadSummary} />
+      )}
+    </main>
+  );
+}
+
+function MemberApp({ summary, refresh }: { summary: MemberSummary; refresh: () => Promise<void> }) {
+  const [tab, setTab] = useState<MemberTab>("pay");
+
+  return (
+    <>
+      <nav className="segment nav-tabs">
+        <button className={tab === "pay" ? "active" : ""} onClick={() => setTab("pay")}>
+          <CreditCard size={17} />
+          Оплата
+        </button>
+        <button className={tab === "history" ? "active" : ""} onClick={() => setTab("history")}>
+          <History size={17} />
+          История
+        </button>
+        <button className={tab === "profile" ? "active" : ""} onClick={() => setTab("profile")}>
+          <Users size={17} />
+          Профиль
+        </button>
+      </nav>
+
+      {tab === "pay" && <PaymentPanel summary={summary} refresh={refresh} />}
+      {tab === "history" && <HistoryPanel summary={summary} />}
+      {tab === "profile" && <ProfilePanel musician={summary.musician} summary={summary} />}
+    </>
+  );
+}
+
+function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const remaining = useRemaining(summary.graceEndsAt);
+
+  const pay = async () => {
+    setBusy(true);
+    try {
+      const result = await api<{ confirmationUrl?: string; alreadyPaid?: boolean }>("/api/payments", {
+        method: "POST",
+        body: { period: summary.period }
+      });
+      if (result.confirmationUrl) {
+        openExternal(result.confirmationUrl);
+      }
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const requestDeferral = async () => {
+    setBusy(true);
+    try {
+      await api("/api/deferrals", { method: "POST" });
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="panel payment-panel">
+      <div className="payment-hero">
+        <div>
+          <p className="eyebrow">{summary.period}</p>
+          <h2>{formatCurrency(summary.payment?.amount ?? summary.musician.monthlyPrice)}</h2>
+        </div>
+        <StatusBadge status={summary.status} />
+      </div>
+
+      <div className="metric-grid">
+        <div className="metric">
+          <CalendarDays size={19} />
+          <span>Дата оплаты</span>
+          <strong>{formatDateTime(summary.dueAt)}</strong>
+        </div>
+        <div className="metric">
+          <Clock size={19} />
+          <span>До конца льготы</span>
+          <strong>{remaining}</strong>
+        </div>
+      </div>
+
+      <div className="action-row">
+        <button className="primary-button" onClick={pay} disabled={busy || summary.status === "paid"}>
+          <CreditCard size={18} />
+          Оплатить
+        </button>
+        <button
+          className="ghost-button"
+          onClick={requestDeferral}
+          disabled={busy || summary.deferral?.status === "pending"}
+        >
+          <Clock size={18} />
+          Запросить отсрочку
+        </button>
+      </div>
+
+      {summary.deferral && (
+        <div className="notice">
+          Заявка на отсрочку: <strong>{summary.deferral.status}</strong>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function HistoryPanel({ summary }: { summary: MemberSummary }) {
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <History size={19} />
+        <h2>История платежей</h2>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Период</th>
+              <th>Сумма</th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.history.map((payment) => (
+              <tr key={payment.id}>
+                <td>{formatDateTime(payment.paidAt ?? payment.createdAt)}</td>
+                <td>{payment.period}</td>
+                <td>{formatCurrency(payment.amount)}</td>
+                <td>
+                  <StatusBadge status={payment.status} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function ProfilePanel({ musician, summary }: { musician: Musician; summary: MemberSummary }) {
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <Users size={19} />
+        <h2>Профиль</h2>
+      </div>
+      <div className="profile-grid">
+        <div>
+          <span>Цена</span>
+          <strong>{formatCurrency(musician.monthlyPrice)}</strong>
+        </div>
+        <div>
+          <span>Ближайшая дата</span>
+          <strong>{formatDateTime(summary.dueAt)}</strong>
+        </div>
+        <div>
+          <span>Льготный период</span>
+          <strong>
+            {summary.grace.days} дн. {summary.grace.hours} ч.
+          </strong>
+        </div>
+      </div>
+      <div className="instrument-list">
+        {musician.instruments.map((instrument) => (
+          <span key={instrument} className="instrument-pill">
+            <InstrumentIcon instrument={instrument} />
+            {instrumentLabels[instrument]}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdminApp() {
+  const [tab, setTab] = useState<AdminTab>("dashboard");
+
+  return (
+    <>
+      <nav className="segment nav-tabs">
+        <button className={tab === "dashboard" ? "active" : ""} onClick={() => setTab("dashboard")}>
+          <CalendarDays size={17} />
+          Оплаты
+        </button>
+        <button className={tab === "members" ? "active" : ""} onClick={() => setTab("members")}>
+          <Users size={17} />
+          Участники
+        </button>
+        <button className={tab === "deferrals" ? "active" : ""} onClick={() => setTab("deferrals")}>
+          <Clock size={17} />
+          Отсрочки
+        </button>
+        <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}>
+          <Settings size={17} />
+          Настройки
+        </button>
+      </nav>
+
+      {tab === "dashboard" && <AdminDashboard />}
+      {tab === "members" && <AdminMembers />}
+      {tab === "deferrals" && <AdminDeferrals />}
+      {tab === "settings" && <AdminSettings />}
+    </>
+  );
+}
+
+function AdminDashboard() {
+  const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
+  const [rows, setRows] = useState<DashboardRow[]>([]);
+
+  const load = useCallback(async () => {
+    const result = await api<{ rows: DashboardRow[] }>(`/api/admin/dashboard?period=${period}`);
+    setRows(result.rows);
+  }, [period]);
+
+  useEffect(() => {
+    load().catch(console.error);
+  }, [load]);
+
+  return (
+    <section className="panel">
+      <div className="toolbar">
+        <div className="section-title">
+          <CalendarDays size={19} />
+          <h2>Дашборд оплат</h2>
+        </div>
+        <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} />
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Участник</th>
+              <th>Инструменты</th>
+              <th>Статус</th>
+              <th>Сумма</th>
+              <th>Дедлайн</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.musician.id} className={row.status === "overdue" ? "danger-row" : ""}>
+                <td>{displayName(row.musician)}</td>
+                <td>
+                  <div className="mini-instruments">
+                    {row.musician.instruments.map((instrument) => (
+                      <span key={instrument} title={instrumentLabels[instrument]}>
+                        <InstrumentIcon instrument={instrument} />
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <StatusBadge status={row.status} />
+                </td>
+                <td>{formatCurrency(row.amount)}</td>
+                <td>{formatDateTime(row.graceEndsAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function AdminMembers() {
+  const [musicians, setMusicians] = useState<Musician[]>([]);
+  const [draft, setDraft] = useState({
+    telegramId: "",
+    fullName: "",
+    username: "",
+    monthlyPrice: 5000,
+    paymentDay: 25,
+    instruments: [] as Instrument[]
+  });
+
+  const load = useCallback(async () => {
+    const result = await api<{ musicians: Musician[] }>("/api/admin/musicians");
+    setMusicians(result.musicians);
+  }, []);
+
+  useEffect(() => {
+    load().catch(console.error);
+  }, [load]);
+
+  const create = async () => {
+    await api("/api/admin/musicians", {
+      method: "POST",
+      body: draft
+    });
+    setDraft({
+      telegramId: "",
+      fullName: "",
+      username: "",
+      monthlyPrice: 5000,
+      paymentDay: 25,
+      instruments: []
+    });
+    await load();
+  };
+
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <UserPlus size={19} />
+        <h2>Участники</h2>
+      </div>
+      <div className="member-form">
+        <input
+          placeholder="Telegram ID"
+          value={draft.telegramId}
+          onChange={(event) => setDraft({ ...draft, telegramId: event.target.value })}
+        />
+        <input
+          placeholder="Имя"
+          value={draft.fullName}
+          onChange={(event) => setDraft({ ...draft, fullName: event.target.value })}
+        />
+        <input
+          placeholder="username"
+          value={draft.username}
+          onChange={(event) => setDraft({ ...draft, username: event.target.value })}
+        />
+        <input
+          type="number"
+          value={draft.monthlyPrice}
+          onChange={(event) => setDraft({ ...draft, monthlyPrice: Number(event.target.value) })}
+        />
+        <input
+          type="number"
+          min={1}
+          max={31}
+          value={draft.paymentDay}
+          onChange={(event) => setDraft({ ...draft, paymentDay: Number(event.target.value) })}
+        />
+        <InstrumentPicker
+          value={draft.instruments}
+          onChange={(instruments) => setDraft({ ...draft, instruments })}
+        />
+        <button className="primary-button" onClick={create} disabled={!draft.telegramId}>
+          <UserPlus size={18} />
+          Добавить
+        </button>
+      </div>
+      <div className="member-list">
+        {musicians.map((musician) => (
+          <MemberEditor key={musician.id} musician={musician} onSaved={load} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () => Promise<void> }) {
+  const [form, setForm] = useState({
+    monthlyPrice: musician.monthlyPrice,
+    paymentDay: musician.paymentDay,
+    gracePeriodDays: musician.gracePeriodDays,
+    gracePeriodHours: musician.gracePeriodHours,
+    instruments: musician.instruments,
+    status: musician.status
+  });
+
+  const save = async () => {
+    await api(`/api/admin/musicians/${musician.id}`, {
+      method: "PATCH",
+      body: form
+    });
+    await onSaved();
+  };
+
+  const archive = async () => {
+    await api(`/api/admin/musicians/${musician.id}`, { method: "DELETE" });
+    await onSaved();
+  };
+
+  return (
+    <article className="member-card">
+      <div className="member-heading">
+        <div>
+          <h3>{displayName(musician)}</h3>
+          <span>{musician.status}</span>
+        </div>
+        <div className="icon-actions">
+          <button title="Сохранить" onClick={save}>
+            <Save size={18} />
+          </button>
+          <button title="Архивировать" onClick={archive}>
+            <Archive size={18} />
+          </button>
+        </div>
+      </div>
+      <div className="compact-grid">
+        <label>
+          Цена
+          <input
+            type="number"
+            value={form.monthlyPrice}
+            onChange={(event) => setForm({ ...form, monthlyPrice: Number(event.target.value) })}
+          />
+        </label>
+        <label>
+          День
+          <input
+            type="number"
+            min={1}
+            max={31}
+            value={form.paymentDay}
+            onChange={(event) => setForm({ ...form, paymentDay: Number(event.target.value) })}
+          />
+        </label>
+        <label>
+          Льгота, дн.
+          <input
+            type="number"
+            value={form.gracePeriodDays ?? ""}
+            onChange={(event) =>
+              setForm({
+                ...form,
+                gracePeriodDays: event.target.value === "" ? null : Number(event.target.value)
+              })
+            }
+          />
+        </label>
+        <label>
+          Льгота, ч.
+          <input
+            type="number"
+            value={form.gracePeriodHours ?? ""}
+            onChange={(event) =>
+              setForm({
+                ...form,
+                gracePeriodHours: event.target.value === "" ? null : Number(event.target.value)
+              })
+            }
+          />
+        </label>
+      </div>
+      <InstrumentPicker
+        value={form.instruments}
+        onChange={(instruments) => setForm({ ...form, instruments })}
+      />
+    </article>
+  );
+}
+
+type AdminDeferral = DeferralRequest & {
+  musician: Musician;
+};
+
+function AdminDeferrals() {
+  const [requests, setRequests] = useState<AdminDeferral[]>([]);
+
+  const load = useCallback(async () => {
+    const result = await api<{ requests: AdminDeferral[] }>("/api/admin/deferrals");
+    setRequests(result.requests);
+  }, []);
+
+  useEffect(() => {
+    load().catch(console.error);
+  }, [load]);
+
+  const decide = async (requestId: string, action: "approve" | "reject") => {
+    await api(`/api/admin/deferrals/${requestId}/${action}`, { method: "POST" });
+    await load();
+  };
+
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <Clock size={19} />
+        <h2>Запросы на отсрочку</h2>
+      </div>
+      <div className="request-list">
+        {requests.map((request) => (
+          <article key={request.id} className="request-row">
+            <div>
+              <h3>{displayName(request.musician)}</h3>
+              <span>
+                {request.period} · {request.status}
+              </span>
+            </div>
+            <div className="icon-actions">
+              <button title="Одобрить" onClick={() => decide(request.id, "approve")}>
+                <Check size={18} />
+              </button>
+              <button title="Отклонить" onClick={() => decide(request.id, "reject")}>
+                <X size={18} />
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdminSettings() {
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+
+  const load = useCallback(async () => {
+    const result = await api<{ settings: AppSettings }>("/api/admin/settings");
+    setSettings(result.settings);
+  }, []);
+
+  useEffect(() => {
+    load().catch(console.error);
+  }, [load]);
+
+  const save = async () => {
+    if (!settings) return;
+    const result = await api<{ settings: AppSettings }>("/api/admin/settings", {
+      method: "PATCH",
+      body: settings
+    });
+    setSettings(result.settings);
+  };
+
+  if (!settings) {
+    return <section className="panel">...</section>;
+  }
+
+  return (
+    <section className="panel">
+      <div className="toolbar">
+        <div className="section-title">
+          <Settings size={19} />
+          <h2>Настройки</h2>
+        </div>
+        <button className="primary-button" onClick={save}>
+          <Save size={18} />
+          Сохранить
+        </button>
+      </div>
+      <div className="settings-grid">
+        <label>
+          День оплаты
+          <input
+            type="number"
+            min={1}
+            max={31}
+            value={settings.defaultPaymentDay}
+            onChange={(event) =>
+              setSettings({ ...settings, defaultPaymentDay: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Льготный период, дн.
+          <input
+            type="number"
+            value={settings.defaultGracePeriodDays}
+            onChange={(event) =>
+              setSettings({ ...settings, defaultGracePeriodDays: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Льготный период, ч.
+          <input
+            type="number"
+            value={settings.defaultGracePeriodHours}
+            onChange={(event) =>
+              setSettings({ ...settings, defaultGracePeriodHours: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Напоминать за, дн.
+          <input
+            type="number"
+            value={settings.reminderDaysBefore}
+            onChange={(event) =>
+              setSettings({ ...settings, reminderDaysBefore: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Время рассылки
+          <input
+            type="time"
+            value={settings.reminderTime}
+            onChange={(event) => setSettings({ ...settings, reminderTime: event.target.value })}
+          />
+        </label>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="720" viewBox="0 0 720 720">
+  <defs>
+    <pattern id="tiny-flower" width="48" height="48" patternUnits="userSpaceOnUse">
+      <circle cx="24" cy="24" r="3" fill="#6d1823"/>
+      <path d="M24 9c4 7 4 23 0 30M9 24c7-4 23-4 30 0M14 14c8 2 20 14 20 20M34 14c-2 8-14 20-20 20" stroke="#19110d" stroke-width="2" fill="none" opacity=".72"/>
+      <circle cx="24" cy="24" r="9" stroke="#19110d" stroke-width="2" fill="none" opacity=".56"/>
+    </pattern>
+    <pattern id="stripe" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="14" height="28" fill="#6d1823"/>
+      <rect x="14" width="14" height="28" fill="#2a1712"/>
+    </pattern>
+    <radialGradient id="fade" cx="50%" cy="50%" r="58%">
+      <stop offset="0" stop-color="#f1dfbf"/>
+      <stop offset=".68" stop-color="#c49b68"/>
+      <stop offset="1" stop-color="#6d1823"/>
+    </radialGradient>
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" seed="8"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 .16"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="720" height="720" fill="#efe0c1"/>
+  <rect x="26" y="26" width="668" height="668" rx="18" fill="#6d1823"/>
+  <rect x="48" y="48" width="624" height="624" rx="10" fill="url(#stripe)" opacity=".8"/>
+  <rect x="76" y="76" width="568" height="568" rx="8" fill="#efe0c1"/>
+  <rect x="98" y="98" width="524" height="524" rx="8" fill="url(#tiny-flower)" opacity=".9"/>
+  <rect x="118" y="118" width="484" height="484" rx="4" fill="#e5c896" opacity=".9"/>
+  <path d="M360 128c54 70 102 118 172 172-70 54-118 102-172 172-54-70-102-118-172-172 70-54 118-102 172-172Z" fill="url(#fade)" opacity=".52"/>
+  <path d="M360 166c40 52 76 88 128 128-52 40-88 76-128 128-40-52-76-88-128-128 52-40 88-76 128-128Z" fill="#efe0c1" stroke="#2a1712" stroke-width="8" opacity=".78"/>
+  <path d="M360 209c26 34 50 58 84 84-34 26-58 50-84 84-26-34-50-58-84-84 34-26 58-50 84-84Z" fill="#6d1823" opacity=".86"/>
+  <g stroke="#19110d" stroke-width="7" fill="none" opacity=".72">
+    <path d="M152 152c78 12 120 52 138 122"/>
+    <path d="M568 152c-78 12-120 52-138 122"/>
+    <path d="M152 568c78-12 120-52 138-122"/>
+    <path d="M568 568c-78-12-120-52-138-122"/>
+  </g>
+  <g fill="#6d1823" opacity=".82">
+    <circle cx="154" cy="154" r="18"/>
+    <circle cx="566" cy="154" r="18"/>
+    <circle cx="154" cy="566" r="18"/>
+    <circle cx="566" cy="566" r="18"/>
+  </g>
+  <rect width="720" height="720" filter="url(#rough)" opacity=".56"/>
+</svg>

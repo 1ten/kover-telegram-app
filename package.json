@@ -1,0 +1,19 @@
+{
+  "name": "kover-telegram-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Telegram Mini App and bot for KOVER rehearsal payments.",
+  "scripts": {
+    "dev": "pnpm --parallel --filter backend --filter bot --filter frontend dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter backend prisma:generate",
+    "db:migrate": "pnpm --filter backend prisma:migrate",
+    "db:deploy": "pnpm --filter backend prisma:deploy",
+    "db:studio": "pnpm --filter backend prisma:studio"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

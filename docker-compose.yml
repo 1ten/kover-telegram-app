@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kover-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kover
+      POSTGRES_USER: kover
+      POSTGRES_PASSWORD: kover
+    ports:
+      - "5432:5432"
+    volumes:
+      - kover-postgres:/var/lib/postgresql/data
+
+volumes:
+  kover-postgres:
