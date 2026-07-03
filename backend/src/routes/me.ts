@@ -3,7 +3,7 @@ import { asyncRoute } from "../lib/asyncRoute.js";
 import { getCurrentPeriod } from "../lib/dates.js";
 import { getSettings } from "../lib/settings.js";
 import { prisma } from "../lib/prisma.js";
-import { resolvePaymentStatus } from "../lib/paymentState.js";
+import { getPaymentAmount, resolvePaymentStatus } from "../lib/paymentState.js";
 
 export const meRouter = Router();
 
@@ -37,6 +37,7 @@ meRouter.get(
       musician,
       period,
       payment,
+      amount: getPaymentAmount(musician, payment),
       history,
       ...paymentState
     });

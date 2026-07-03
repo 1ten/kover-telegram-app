@@ -1,6 +1,9 @@
 import type { Musician, Payment, Settings } from "@prisma/client";
 import { getPaymentDeadline } from "./dates.js";
 
+export const getPaymentAmount = (musician: Musician, payment?: Payment | null) =>
+  payment?.status === "paid" ? payment.amount : musician.monthlyPrice;
+
 export const resolvePaymentStatus = (input: {
   musician: Musician;
   settings: Settings;

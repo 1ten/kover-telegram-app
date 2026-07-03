@@ -241,11 +241,11 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSummary = useCallback(async () => {
+  const loadSummary = useCallback(async (options: { preferAdmin?: boolean } = {}) => {
     setError(null);
     const result = await api<MemberSummary>("/api/me/summary");
     setSummary(result);
-    if (result.musician.isAdmin) {
+    if (options.preferAdmin && result.musician.isAdmin) {
       setMode("admin");
     }
   }, []);
@@ -255,7 +255,7 @@ export function App() {
     let timeoutId: number | undefined;
     const startedAt = Date.now();
 
-    loadSummary()
+    loadSummary({ preferAdmin: true })
       .catch((err: Error) => {
         if (!cancelled) {
           setError(err.message);
@@ -318,11 +318,21 @@ export function App() {
             <Music size={28} />
           </span>
         </div>
-        {isAdmin && <RoleToggle mode={mode} onChange={setMode} />}
+        {isAdmin && (
+          <RoleToggle
+            mode={mode}
+            onChange={(nextMode) => {
+              setMode(nextMode);
+              if (nextMode === "member") {
+                loadSummary().catch(console.error);
+              }
+            }}
+          />
+        )}
       </header>
 
       {mode === "admin" && isAdmin ? (
-        <AdminApp />
+        <AdminApp onDataChange={loadSummary} />
       ) : (
         <MemberApp summary={summary} refresh={loadSummary} />
       )}
@@ -377,7 +387,7 @@ function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: (
       <div className="payment-hero">
         <div>
           <p className="eyebrow">Период {summary.period}</p>
-          <h2>{formatCurrency(summary.payment?.amount ?? summary.musician.monthlyPrice)}</h2>
+          <h2>{formatCurrency(summary.amount)}</h2>
         </div>
         <StatusBadge status={summary.status} />
       </div>
@@ -477,7 +487,7 @@ function ProfilePanel({ musician, summary }: { musician: Musician; summary: Memb
   );
 }
 
-function AdminApp() {
+function AdminApp({ onDataChange }: { onDataChange: () => Promise<void> }) {
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const items: NavItem<AdminTab>[] = [
     { value: "dashboard", label: "Оплаты", icon: <CalendarDays size={19} /> },
@@ -489,14 +499,14 @@ function AdminApp() {
     <>
       <NavDock items={items} value={tab} onChange={setTab} variant="admin" />
 
-      {tab === "dashboard" && <AdminDashboard />}
-      {tab === "members" && <AdminMembers />}
-      {tab === "settings" && <AdminSettings />}
+      {tab === "dashboard" && <AdminDashboard onDataChange={onDataChange} />}
+      {tab === "members" && <AdminMembers onDataChange={onDataChange} />}
+      {tab === "settings" && <AdminSettings onDataChange={onDataChange} />}
     </>
   );
 }
 
-function AdminDashboard() {
+function AdminDashboard({ onDataChange }: { onDataChange: () => Promise<void> }) {
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [rows, setRows] = useState<DashboardRow[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -522,6 +532,7 @@ function AdminDashboard() {
         }
       });
       await load();
+      await onDataChange();
     } finally {
       setBusyId(null);
     }
@@ -596,7 +607,7 @@ function AdminDashboard() {
   );
 }
 
-function AdminMembers() {
+function AdminMembers({ onDataChange }: { onDataChange: () => Promise<void> }) {
   const [musicians, setMusicians] = useState<Musician[]>([]);
   const [draft, setDraft] = useState({
     telegramId: "",
@@ -630,6 +641,12 @@ function AdminMembers() {
       instruments: []
     });
     await load();
+    await onDataChange();
+  };
+
+  const refreshAfterMemberChange = async () => {
+    await load();
+    await onDataChange();
   };
 
   return (
@@ -677,7 +694,7 @@ function AdminMembers() {
       </div>
       <div className="member-list">
         {musicians.map((musician) => (
-          <MemberEditor key={musician.id} musician={musician} onSaved={load} />
+          <MemberEditor key={musician.id} musician={musician} onSaved={refreshAfterMemberChange} />
         ))}
       </div>
     </section>
@@ -791,7 +808,7 @@ function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () =
   );
 }
 
-function AdminSettings() {
+function AdminSettings({ onDataChange }: { onDataChange: () => Promise<void> }) {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [notifyBusy, setNotifyBusy] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
@@ -812,6 +829,7 @@ function AdminSettings() {
       body: settings
     });
     setSettings(result.settings);
+    await onDataChange();
   };
 
   const sendTestPaymentReminder = async () => {

@@ -40,6 +40,7 @@ export type MemberSummary = {
   musician: Musician;
   period: string;
   payment: Payment | null;
+  amount: number;
   history: Payment[];
   status: PaymentStatus;
   dueAt: string;

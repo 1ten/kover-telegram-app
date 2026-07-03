@@ -177,6 +177,9 @@ const resolveStatus = (musician: Musician, period: string, payment?: Payment): P
   return new Date() > new Date(deadline(musician, period).graceEndsAt) ? "overdue" : "pending";
 };
 
+const getPaymentAmount = (musician: Musician, payment?: Payment | null) =>
+  payment?.status === "paid" ? payment.amount : musician.monthlyPrice;
+
 const findMusician = (id: string) => {
   const musician = musicians.find((item) => item.id === id);
 
@@ -196,6 +199,7 @@ const buildSummary = (musicianId = currentMusicianId, period = currentPeriod()):
     musician,
     period,
     payment,
+    amount: getPaymentAmount(musician, payment),
     history: payments
       .filter((item) => item.musicianId === musician.id)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
@@ -214,7 +218,7 @@ const buildDashboard = (period: string): DashboardRow[] =>
       return {
         musician,
         payment,
-        amount: payment?.amount ?? musician.monthlyPrice,
+        amount: getPaymentAmount(musician, payment),
         status: resolveStatus(musician, period, payment ?? undefined),
         dueAt: dates.dueAt,
         graceEndsAt: dates.graceEndsAt
@@ -275,6 +279,16 @@ const updateMusician = (id: string, draft: MusicianDraft & Partial<Pick<Musician
 
   const next = { ...musicians[index], ...draft } as Musician;
   musicians = musicians.map((musician) => (musician.id === id ? next : musician));
+
+  if (draft.monthlyPrice !== undefined) {
+    const period = currentPeriod();
+    payments = payments.map((payment) =>
+      payment.musicianId === id && payment.period === period && payment.status !== "paid"
+        ? { ...payment, amount: next.monthlyPrice }
+        : payment
+    );
+  }
+
   return next;
 };
 

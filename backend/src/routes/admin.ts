@@ -4,7 +4,7 @@ import { requireAdmin } from "../auth/middleware.js";
 import { asyncRoute } from "../lib/asyncRoute.js";
 import { getCurrentPeriod } from "../lib/dates.js";
 import { logger } from "../lib/logger.js";
-import { resolvePaymentStatus } from "../lib/paymentState.js";
+import { getPaymentAmount, resolvePaymentStatus } from "../lib/paymentState.js";
 import { prisma } from "../lib/prisma.js";
 import { getSettings } from "../lib/settings.js";
 import { notifyParticipant } from "../telegram/notify.js";
@@ -69,7 +69,7 @@ adminRouter.get(
       return {
         musician,
         payment,
-        amount: payment?.amount ?? musician.monthlyPrice,
+        amount: getPaymentAmount(musician, payment),
         ...state
       };
     });
@@ -122,15 +122,34 @@ adminRouter.patch(
   "/musicians/:id",
   asyncRoute(async (req, res) => {
     const body = musicianUpdateSchema.parse(req.body);
-    const musician = await prisma.musician.update({
-      where: { id: req.params.id },
-      data: body
+    const period = getCurrentPeriod();
+    const { musician, syncedCurrentPayments } = await prisma.$transaction(async (tx) => {
+      const musician = await tx.musician.update({
+        where: { id: req.params.id },
+        data: body
+      });
+
+      if (body.monthlyPrice === undefined) {
+        return { musician, syncedCurrentPayments: 0 };
+      }
+
+      const result = await tx.payment.updateMany({
+        where: {
+          musicianId: musician.id,
+          period,
+          status: { not: "paid" }
+        },
+        data: { amount: musician.monthlyPrice }
+      });
+
+      return { musician, syncedCurrentPayments: result.count };
     });
 
     logger.info("musician_updated", {
       adminId: req.musician!.id,
       musicianId: musician.id,
-      changedFields: Object.keys(body)
+      changedFields: Object.keys(body),
+      syncedCurrentPayments
     });
 
     res.json({ musician });
