@@ -33,6 +33,7 @@ import type {
 type RoleMode = "member" | "admin";
 type MemberTab = "pay" | "history" | "profile";
 type AdminTab = "dashboard" | "members" | "deferrals" | "settings";
+const MIN_LOADING_MS = 1800;
 
 const instrumentLabels: Record<Instrument, string> = {
   mic: "Вокал",
@@ -108,6 +109,21 @@ function StatusBadge({ status }: { status: keyof typeof statusCopy }) {
   return <span className={`status-badge ${status}`}>{statusCopy[status]}</span>;
 }
 
+function LoadingScreen() {
+  return (
+    <main className="loading-screen">
+      <div className="loading-orbit" aria-hidden="true">
+        <div className="loading-carpet" />
+        <span className="orbit-dot dot-a" />
+        <span className="orbit-dot dot-b" />
+        <span className="orbit-dot dot-c" />
+      </div>
+      <KoverMark />
+      <p>KOVER</p>
+    </main>
+  );
+}
+
 function InstrumentPicker({
   value,
   onChange
@@ -173,13 +189,37 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    let timeoutId: number | undefined;
+    const startedAt = Date.now();
+
     loadSummary()
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err: Error) => {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      })
+      .finally(() => {
+        const elapsed = Date.now() - startedAt;
+        const wait = Math.max(MIN_LOADING_MS - elapsed, 0);
+
+        timeoutId = window.setTimeout(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }, wait);
+      });
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, [loadSummary]);
 
   if (loading) {
-    return <main className="screen-state">KOVER</main>;
+    return <LoadingScreen />;
   }
 
   if (error || !summary) {
@@ -200,7 +240,7 @@ export function App() {
   const isAdmin = summary.musician.isAdmin;
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${mode === "admin" && isAdmin ? "admin-shell" : "member-shell"}`}>
       <header className="topbar">
         <div className="brand-lockup">
           <KoverMark />
@@ -302,7 +342,7 @@ function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: (
     <section className="panel payment-panel">
       <div className="payment-hero">
         <div>
-          <p className="eyebrow">{summary.period}</p>
+          <p className="eyebrow">Период {summary.period}</p>
           <h2>{formatCurrency(summary.payment?.amount ?? summary.musician.monthlyPrice)}</h2>
         </div>
         <StatusBadge status={summary.status} />
