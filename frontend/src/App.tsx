@@ -20,7 +20,7 @@ import {
   X
 } from "lucide-react";
 import { api } from "./api";
-import { openExternal } from "./telegram";
+import { getTelegramDebugInfo, openExternal } from "./telegram";
 import type {
   DashboardRow,
   DeferralRequest,
@@ -183,9 +183,12 @@ export function App() {
   }
 
   if (error || !summary) {
+    const debugInfo = getTelegramDebugInfo();
+
     return (
       <main className="screen-state error-state">
         <p>{error || "Не удалось открыть приложение"}</p>
+        <pre className="debug-box">{JSON.stringify(debugInfo, null, 2)}</pre>
         <button className="primary-button" onClick={() => window.location.reload()}>
           <RefreshCw size={18} />
           Обновить

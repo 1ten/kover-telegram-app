@@ -14,6 +14,22 @@ export const startEmbeddedBot = async () => {
 
   bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
+  await bot.api
+    .setChatMenuButton({
+      menu_button: {
+        type: "web_app",
+        text: "KOVER",
+        web_app: {
+          url: env.FRONTEND_URL
+        }
+      }
+    })
+    .catch((error) => {
+      logger.error("bot_menu_button_setup_failed", {
+        message: error instanceof Error ? error.message : String(error)
+      });
+    });
+
   bot.command("start", async (ctx) => {
     const telegramId = BigInt(ctx.from!.id);
     const isAdmin = adminTelegramIds.has(String(ctx.from!.id));

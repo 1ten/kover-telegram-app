@@ -162,6 +162,21 @@ tr:hover td {
   font-size: 16px;
 }
 
+.debug-box {
+  width: min(100%, 420px);
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid rgba(255, 244, 220, 0.26);
+  border-radius: 6px;
+  padding: 10px;
+  color: #fff4dc;
+  background: rgba(0, 0, 0, 0.28);
+  font: 11px/1.45 "Cascadia Mono", Consolas, monospace;
+  text-align: left;
+  text-transform: none;
+  white-space: pre-wrap;
+}
+
 .topbar,
 .toolbar,
 .member-heading,

@@ -10,6 +10,9 @@ type TelegramThemeParams = {
 
 type TelegramWebApp = {
   initData: string;
+  initDataUnsafe?: unknown;
+  platform?: string;
+  version?: string;
   themeParams: TelegramThemeParams;
   colorScheme: "light" | "dark";
   ready: () => void;
@@ -53,6 +56,22 @@ export const initTelegram = () => {
 
 export const getInitData = () =>
   getTelegramWebApp()?.initData || import.meta.env.VITE_DEV_INIT_DATA || "";
+
+export const getTelegramDebugInfo = () => {
+  const tg = getTelegramWebApp();
+
+  return {
+    telegramObject: Boolean(window.Telegram),
+    webAppObject: Boolean(tg),
+    initDataLength: tg?.initData?.length ?? 0,
+    platform: tg?.platform ?? "unknown",
+    version: tg?.version ?? "unknown",
+    demoMode: import.meta.env.VITE_DEMO_MODE ?? "unset",
+    apiUrl: import.meta.env.VITE_API_URL ?? "unset",
+    url: window.location.href,
+    userAgent: navigator.userAgent
+  };
+};
 
 export const openExternal = (url: string) => {
   const tg = getTelegramWebApp();
