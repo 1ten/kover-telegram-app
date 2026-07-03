@@ -20,11 +20,8 @@ meRouter.get(
     const musician = req.musician!;
     const period = getCurrentPeriod();
     const settings = await getSettings();
-    const [payment, deferral, history] = await Promise.all([
+    const [payment, history] = await Promise.all([
       prisma.payment.findUnique({
-        where: { musicianId_period: { musicianId: musician.id, period } }
-      }),
-      prisma.deferralRequest.findUnique({
         where: { musicianId_period: { musicianId: musician.id, period } }
       }),
       prisma.payment.findMany({
@@ -34,13 +31,12 @@ meRouter.get(
       })
     ]);
 
-    const paymentState = resolvePaymentStatus({ musician, settings, period, payment, deferral });
+    const paymentState = resolvePaymentStatus({ musician, settings, period, payment });
 
     res.json({
       musician,
       period,
       payment,
-      deferral,
       history,
       ...paymentState
     });

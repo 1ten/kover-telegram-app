@@ -1,11 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
-import { env } from "../config/env.js";
 import { asyncRoute } from "../lib/asyncRoute.js";
 import { getCurrentPeriod } from "../lib/dates.js";
 import { logger } from "../lib/logger.js";
 import { prisma } from "../lib/prisma.js";
-import { paymentProvider } from "../payments/provider.js";
 
 export const paymentsRouter = Router();
 
@@ -48,56 +46,39 @@ paymentsRouter.post(
       return;
     }
 
+    const now = new Date();
+
     if (!payment) {
       payment = await prisma.payment.create({
         data: {
           musicianId: musician.id,
           amount,
           period,
-          status: "pending"
+          status: "paid",
+          paidAt: now
         }
       });
-    } else if (payment.amount !== amount || payment.status !== "pending") {
+    } else {
       payment = await prisma.payment.update({
         where: { id: payment.id },
         data: {
           amount,
-          status: "pending"
+          status: "paid",
+          paidAt: payment.paidAt ?? now,
+          yookassaPaymentId: null
         }
       });
     }
 
-    const providerPayment = await paymentProvider.createPayment({
-      amount,
-      description: `KOVER: репетиции за ${period}`,
-      returnUrl: env.YOOKASSA_RETURN_URL,
-      metadata: {
-        paymentId: payment.id,
-        musicianId: musician.id,
-        period
-      }
-    });
-
-    const updatedPayment = await prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        yookassaPaymentId: providerPayment.providerPaymentId,
-        status: "pending"
-      }
-    });
-
-    logger.info("payment_created", {
+    logger.info("payment_marked_by_participant", {
       paymentId: payment.id,
-      providerPaymentId: providerPayment.providerPaymentId,
       musicianId: musician.id,
       period,
       amount
     });
 
     res.status(201).json({
-      payment: updatedPayment,
-      confirmationUrl: providerPayment.confirmationUrl,
-      manualPayment: !providerPayment.confirmationUrl
+      payment
     });
   })
 );

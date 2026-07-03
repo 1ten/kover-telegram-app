@@ -560,7 +560,7 @@ tr:hover td {
 }
 
 .admin-dock {
-  grid-template-columns: repeat(4, minmax(118px, 1fr));
+  grid-template-columns: repeat(3, minmax(118px, 1fr));
   background:
     linear-gradient(135deg, rgba(255, 244, 220, 0.14), rgba(255, 244, 220, 0.04)),
     linear-gradient(90deg, rgba(31, 109, 76, 0.95), rgba(38, 57, 79, 0.88));
@@ -1175,7 +1175,7 @@ label {
   }
 
   .admin-dock {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .nav-card {

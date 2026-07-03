@@ -2,7 +2,6 @@ import { Bot, InlineKeyboard } from "grammy";
 import { adminTelegramIds, env } from "../config/env.js";
 import { logger } from "../lib/logger.js";
 import { prisma } from "../lib/prisma.js";
-import { registerDeferralCallbacks } from "./deferrals.js";
 import { startReminderCron } from "./reminders.js";
 
 let bot: Bot | undefined;
@@ -61,7 +60,6 @@ export const startEmbeddedBot = async () => {
     });
   });
 
-  registerDeferralCallbacks(bot);
   startReminderCron(bot);
 
   bot.catch((error) => {

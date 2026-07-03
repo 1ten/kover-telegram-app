@@ -1,6 +1,5 @@
 import type {
   DashboardRow,
-  DeferralRequest,
   Instrument,
   MemberSummary,
   Musician,
@@ -142,18 +141,6 @@ let payments: Payment[] = [
   }
 ];
 
-let deferrals: DeferralRequest[] = [
-  {
-    id: "d-guitar-current",
-    musicianId: "m-guitar",
-    period: currentPeriod(),
-    status: "pending",
-    requestedAt: iso(new Date()),
-    resolvedAt: null,
-    adminComment: null
-  }
-];
-
 const currentMusicianId = "m-admin";
 
 const asDateParts = (period: string) => {
@@ -183,15 +170,9 @@ const deadline = (musician: Musician, period: string) => {
   };
 };
 
-const resolveStatus = (
-  musician: Musician,
-  period: string,
-  payment?: Payment,
-  deferral?: DeferralRequest
-): PaymentStatus => {
+const resolveStatus = (musician: Musician, period: string, payment?: Payment): PaymentStatus => {
   if (payment?.status === "paid") return "paid";
   if (payment?.status === "failed") return "failed";
-  if (deferral?.status === "approved") return "pending";
   if (payment?.status === "overdue") return "overdue";
   return new Date() > new Date(deadline(musician, period).graceEndsAt) ? "overdue" : "pending";
 };
@@ -209,19 +190,16 @@ const findMusician = (id: string) => {
 const buildSummary = (musicianId = currentMusicianId, period = currentPeriod()): MemberSummary => {
   const musician = findMusician(musicianId);
   const payment = payments.find((item) => item.musicianId === musician.id && item.period === period) ?? null;
-  const deferral =
-    deferrals.find((item) => item.musicianId === musician.id && item.period === period) ?? null;
   const dates = deadline(musician, period);
 
   return {
     musician,
     period,
     payment,
-    deferral,
     history: payments
       .filter((item) => item.musicianId === musician.id)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
-    status: resolveStatus(musician, period, payment ?? undefined, deferral ?? undefined),
+    status: resolveStatus(musician, period, payment ?? undefined),
     ...dates
   };
 };
@@ -231,16 +209,13 @@ const buildDashboard = (period: string): DashboardRow[] =>
     .filter((musician) => musician.status === "active")
     .map((musician) => {
       const payment = payments.find((item) => item.musicianId === musician.id && item.period === period) ?? null;
-      const deferral =
-        deferrals.find((item) => item.musicianId === musician.id && item.period === period) ?? null;
       const dates = deadline(musician, period);
 
       return {
         musician,
         payment,
-        deferral,
         amount: payment?.amount ?? musician.monthlyPrice,
-        status: resolveStatus(musician, period, payment ?? undefined, deferral ?? undefined),
+        status: resolveStatus(musician, period, payment ?? undefined),
         dueAt: dates.dueAt,
         graceEndsAt: dates.graceEndsAt
       };
@@ -335,35 +310,6 @@ export const demoApi = async <T>(path: string, options: MockOptions = {}): Promi
     }) as T;
   }
 
-  if (url.pathname === "/api/deferrals" && method === "GET") {
-    return clone({
-      requests: deferrals.filter((request) => request.musicianId === currentMusicianId)
-    }) as T;
-  }
-
-  if (url.pathname === "/api/deferrals" && method === "POST") {
-    const existing = deferrals.find(
-      (request) => request.musicianId === currentMusicianId && request.period === period
-    );
-    const request =
-      existing ??
-      ({
-        id: newId("d"),
-        musicianId: currentMusicianId,
-        period,
-        status: "pending",
-        requestedAt: iso(new Date()),
-        resolvedAt: null,
-        adminComment: null
-      } satisfies DeferralRequest);
-
-    if (!existing) {
-      deferrals = [request, ...deferrals];
-    }
-
-    return clone({ request }) as T;
-  }
-
   if (url.pathname === "/api/admin/dashboard") {
     return clone({ period, rows: buildDashboard(period) }) as T;
   }
@@ -385,33 +331,6 @@ export const demoApi = async <T>(path: string, options: MockOptions = {}): Promi
     return clone({ musician: updateMusician(musicianPatch[1]!, { status: "archived" }) }) as T;
   }
 
-  if (url.pathname === "/api/admin/deferrals") {
-    return clone({
-      requests: deferrals.map((request) => ({
-        ...request,
-        musician: findMusician(request.musicianId)
-      }))
-    }) as T;
-  }
-
-  const deferralDecision = url.pathname.match(/^\/api\/admin\/deferrals\/([^/]+)\/(approve|reject)$/);
-  if (deferralDecision && method === "POST") {
-    const requestId = deferralDecision[1]!;
-    const action = deferralDecision[2]!;
-    const status = action === "approve" ? "approved" : "rejected";
-    deferrals = deferrals.map((request) =>
-      request.id === requestId
-        ? {
-            ...request,
-            status,
-            resolvedAt: iso(new Date())
-          }
-        : request
-    );
-    const request = deferrals.find((item) => item.id === requestId)!;
-    return clone({ request, musicianName: findMusician(request.musicianId).fullName }) as T;
-  }
-
   if (url.pathname === "/api/admin/settings" && method === "GET") {
     return clone({ settings }) as T;
   }
@@ -419,6 +338,10 @@ export const demoApi = async <T>(path: string, options: MockOptions = {}): Promi
   if (url.pathname === "/api/admin/settings" && method === "PATCH") {
     settings = { ...settings, ...body };
     return clone({ settings }) as T;
+  }
+
+  if (url.pathname === "/api/admin/settings/test-payment-reminder" && method === "POST") {
+    return clone({ sent: musicians.filter((musician) => musician.status === "active").length }) as T;
   }
 
   throw new Error(`Demo API route is not implemented: ${method} ${url.pathname}`);

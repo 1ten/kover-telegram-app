@@ -1,7 +1,6 @@
 import cors from "cors";
 import express, { type ErrorRequestHandler } from "express";
 import { adminRouter } from "./routes/admin.js";
-import { deferralsRouter } from "./routes/deferrals.js";
 import { meRouter } from "./routes/me.js";
 import { paymentsRouter } from "./routes/payments.js";
 import { webhooksRouter } from "./routes/webhooks.js";
@@ -28,7 +27,6 @@ export const createApp = () => {
   app.use("/api", authenticateTelegram);
   app.use("/api/me", meRouter);
   app.use("/api/payments", paymentsRouter);
-  app.use("/api/deferrals", deferralsRouter);
   app.use("/api/admin", adminRouter);
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {

@@ -49,9 +49,6 @@ const manualPaymentSchema = z.object({
   status: z.enum(["paid", "pending", "failed"]).default("paid")
 });
 
-const resolveName = (musician: { fullName: string | null; username: string | null; telegramId: bigint }) =>
-  musician.fullName || (musician.username ? `@${musician.username}` : musician.telegramId.toString());
-
 adminRouter.get(
   "/dashboard",
   asyncRoute(async (req, res) => {
@@ -60,21 +57,18 @@ adminRouter.get(
     const musicians = await prisma.musician.findMany({
       where: { status: "active" },
       include: {
-        payments: { where: { period } },
-        deferralRequests: { where: { period } }
+        payments: { where: { period } }
       },
       orderBy: [{ fullName: "asc" }, { username: "asc" }]
     });
 
     const rows = musicians.map((musician) => {
       const payment = musician.payments[0] ?? null;
-      const deferral = musician.deferralRequests[0] ?? null;
-      const state = resolvePaymentStatus({ musician, settings, period, payment, deferral });
+      const state = resolvePaymentStatus({ musician, settings, period, payment });
 
       return {
         musician,
         payment,
-        deferral,
         amount: payment?.amount ?? musician.monthlyPrice,
         ...state
       };
@@ -160,18 +154,6 @@ adminRouter.delete(
   })
 );
 
-adminRouter.get(
-  "/deferrals",
-  asyncRoute(async (_req, res) => {
-    const requests = await prisma.deferralRequest.findMany({
-      include: { musician: true },
-      orderBy: [{ status: "asc" }, { requestedAt: "desc" }]
-    });
-
-    res.json({ requests });
-  })
-);
-
 adminRouter.post(
   "/payments/manual-status",
   asyncRoute(async (req, res) => {
@@ -217,75 +199,6 @@ adminRouter.post(
   })
 );
 
-adminRouter.post(
-  "/deferrals/:id/approve",
-  asyncRoute(async (req, res) => {
-    const request = await prisma.deferralRequest.update({
-      where: { id: req.params.id },
-      data: {
-        status: "approved",
-        resolvedAt: new Date(),
-        adminComment: typeof req.body?.adminComment === "string" ? req.body.adminComment : null
-      },
-      include: { musician: true }
-    });
-
-    await prisma.payment.updateMany({
-      where: {
-        musicianId: request.musicianId,
-        period: request.period,
-        status: "overdue"
-      },
-      data: { status: "pending" }
-    });
-
-    await notifyParticipant(
-      request.musician.telegramId,
-      `Заявка на отсрочку за ${request.period} одобрена.`
-    );
-
-    logger.info("deferral_approved", {
-      adminId: req.musician!.id,
-      requestId: request.id,
-      musicianId: request.musicianId
-    });
-
-    res.json({ request, musicianName: resolveName(request.musician) });
-  })
-);
-
-adminRouter.post(
-  "/deferrals/:id/reject",
-  asyncRoute(async (req, res) => {
-    const request = await prisma.deferralRequest.delete({
-      where: { id: req.params.id },
-      include: { musician: true }
-    });
-
-    await notifyParticipant(
-      request.musician.telegramId,
-      `Заявка на отсрочку за ${request.period} отклонена.`
-    );
-
-    logger.info("deferral_rejected", {
-      adminId: req.musician!.id,
-      requestId: request.id,
-      musicianId: request.musicianId
-    });
-
-    res.json({
-      request: {
-        ...request,
-        status: "rejected",
-        resolvedAt: new Date(),
-        adminComment: typeof req.body?.adminComment === "string" ? req.body.adminComment : null
-      },
-      deleted: true,
-      musicianName: resolveName(request.musician)
-    });
-  })
-);
-
 adminRouter.get(
   "/settings",
   asyncRoute(async (_req, res) => {
@@ -308,5 +221,36 @@ adminRouter.patch(
     });
 
     res.json({ settings });
+  })
+);
+
+adminRouter.post(
+  "/settings/test-payment-reminder",
+  asyncRoute(async (req, res) => {
+    const period = getCurrentPeriod();
+    const musicians = await prisma.musician.findMany({
+      where: { status: "active" },
+      select: {
+        id: true,
+        telegramId: true
+      }
+    });
+
+    await Promise.all(
+      musicians.map((musician) =>
+        notifyParticipant(
+          musician.telegramId,
+          `Тестовое оповещение KOVER: пора оплатить репетиции за ${period}. Открой приложение и нажми «Оплатить».`
+        )
+      )
+    );
+
+    logger.info("test_payment_reminder_sent", {
+      adminId: req.musician!.id,
+      period,
+      count: musicians.length
+    });
+
+    res.json({ sent: musicians.length, period });
   })
 );

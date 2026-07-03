@@ -1,6 +1,5 @@
 export type Instrument = "mic" | "guitar" | "bass" | "drums" | "synth" | "teacher";
 export type PaymentStatus = "pending" | "paid" | "overdue" | "failed";
-export type DeferralStatus = "pending" | "approved" | "rejected";
 export type MusicianStatus = "active" | "archived";
 
 export type Musician = {
@@ -28,16 +27,6 @@ export type Payment = {
   paidAt: string | null;
 };
 
-export type DeferralRequest = {
-  id: string;
-  musicianId: string;
-  period: string;
-  status: DeferralStatus;
-  requestedAt: string;
-  resolvedAt: string | null;
-  adminComment: string | null;
-};
-
 export type Settings = {
   id: string;
   defaultPaymentDay: number;
@@ -51,7 +40,6 @@ export type MemberSummary = {
   musician: Musician;
   period: string;
   payment: Payment | null;
-  deferral: DeferralRequest | null;
   history: Payment[];
   status: PaymentStatus;
   dueAt: string;
@@ -65,7 +53,6 @@ export type MemberSummary = {
 export type DashboardRow = {
   musician: Musician;
   payment: Payment | null;
-  deferral: DeferralRequest | null;
   amount: number;
   status: PaymentStatus;
   dueAt: string;

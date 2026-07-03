@@ -10,7 +10,8 @@ const sentInProcess = new Set<string>();
 const textByType = {
   before: (period: string) => `Напоминание KOVER: скоро оплата репетиций за ${period}.`,
   due: (period: string) => `Сегодня день оплаты KOVER за ${period}.`,
-  overdue: (period: string) => `Оплата KOVER за ${period} просрочена. Пожалуйста, оплатите или запросите отсрочку.`
+  overdue: (period: string) =>
+    `Оплата KOVER за ${period} просрочена. Пожалуйста, откройте приложение и нажмите «Оплатить».`
 };
 
 const appKeyboard = () => new InlineKeyboard().webApp("Открыть KOVER", env.FRONTEND_URL);
@@ -32,16 +33,14 @@ export const startReminderCron = (bot: Bot) => {
     const musicians = await prisma.musician.findMany({
       where: { status: "active" },
       include: {
-        payments: { where: { period } },
-        deferralRequests: { where: { period } }
+        payments: { where: { period } }
       }
     });
 
     for (const musician of musicians) {
       const payment = musician.payments[0];
-      const deferral = musician.deferralRequests[0];
 
-      if (payment?.status === "paid" || deferral?.status === "approved") {
+      if (payment?.status === "paid") {
         continue;
       }
 

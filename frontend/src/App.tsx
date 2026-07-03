@@ -20,10 +20,9 @@ import {
   X
 } from "lucide-react";
 import { api } from "./api";
-import { getTelegramDebugInfo, openExternal } from "./telegram";
+import { getTelegramDebugInfo } from "./telegram";
 import type {
   DashboardRow,
-  DeferralRequest,
   Instrument,
   MemberSummary,
   Musician,
@@ -32,7 +31,7 @@ import type {
 
 type RoleMode = "member" | "admin";
 type MemberTab = "pay" | "history" | "profile";
-type AdminTab = "dashboard" | "members" | "deferrals" | "settings";
+type AdminTab = "dashboard" | "members" | "settings";
 const MIN_LOADING_MS = 1800;
 
 type NavItem<T extends string> = {
@@ -355,29 +354,13 @@ function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: (
     setMessage(null);
     try {
       const result = await api<{
-        confirmationUrl?: string;
+        payment?: unknown;
         alreadyPaid?: boolean;
-        manualPayment?: boolean;
       }>("/api/payments", {
         method: "POST",
         body: { period: summary.period }
       });
-      if (result.confirmationUrl) {
-        openExternal(result.confirmationUrl);
-      }
-      if (result.manualPayment) {
-        setMessage("Счёт создан. После перевода админ отметит оплату вручную.");
-      }
-      await refresh();
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const requestDeferral = async () => {
-    setBusy(true);
-    try {
-      await api("/api/deferrals", { method: "POST" });
+      setMessage(result.alreadyPaid ? "Оплата уже была отмечена." : "Оплата отмечена. Она появится в истории и админ-панели.");
       await refresh();
     } finally {
       setBusy(false);
@@ -410,25 +393,11 @@ function PaymentPanel({ summary, refresh }: { summary: MemberSummary; refresh: (
       <div className="action-row">
         <button className="primary-button" onClick={pay} disabled={busy || summary.status === "paid"}>
           <CreditCard size={18} />
-          {summary.payment ? "Обновить счёт" : "Создать счёт"}
-        </button>
-        <button
-          className="ghost-button"
-          onClick={requestDeferral}
-          disabled={busy || summary.deferral?.status === "pending"}
-        >
-          <Clock size={18} />
-          Запросить отсрочку
+          Оплатить
         </button>
       </div>
 
       {message && <div className="notice">{message}</div>}
-
-      {summary.deferral && (
-        <div className="notice">
-          Заявка на отсрочку: <strong>{summary.deferral.status}</strong>
-        </div>
-      )}
     </section>
   );
 }
@@ -508,7 +477,6 @@ function AdminApp() {
   const items: NavItem<AdminTab>[] = [
     { value: "dashboard", label: "Оплаты", icon: <CalendarDays size={19} /> },
     { value: "members", label: "Участники", icon: <Users size={19} /> },
-    { value: "deferrals", label: "Отсрочки", icon: <Clock size={19} /> },
     { value: "settings", label: "Настройки", icon: <Settings size={19} /> }
   ];
 
@@ -518,7 +486,6 @@ function AdminApp() {
 
       {tab === "dashboard" && <AdminDashboard />}
       {tab === "members" && <AdminMembers />}
-      {tab === "deferrals" && <AdminDeferrals />}
       {tab === "settings" && <AdminSettings />}
     </>
   );
@@ -735,6 +702,14 @@ function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () =
     await onSaved();
   };
 
+  const restore = async () => {
+    await api(`/api/admin/musicians/${musician.id}`, {
+      method: "PATCH",
+      body: { status: "active" }
+    });
+    await onSaved();
+  };
+
   return (
     <article className="member-card">
       <div className="member-heading">
@@ -746,9 +721,15 @@ function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () =
           <button title="Сохранить" onClick={save}>
             <Save size={18} />
           </button>
-          <button title="Архивировать" onClick={archive}>
-            <Archive size={18} />
-          </button>
+          {musician.status === "archived" ? (
+            <button title="Вернуть из архива" onClick={restore}>
+              <RefreshCw size={18} />
+            </button>
+          ) : (
+            <button title="Архивировать" onClick={archive}>
+              <Archive size={18} />
+            </button>
+          )}
         </div>
       </div>
       <div className="compact-grid">
@@ -805,59 +786,10 @@ function MemberEditor({ musician, onSaved }: { musician: Musician; onSaved: () =
   );
 }
 
-type AdminDeferral = DeferralRequest & {
-  musician: Musician;
-};
-
-function AdminDeferrals() {
-  const [requests, setRequests] = useState<AdminDeferral[]>([]);
-
-  const load = useCallback(async () => {
-    const result = await api<{ requests: AdminDeferral[] }>("/api/admin/deferrals");
-    setRequests(result.requests);
-  }, []);
-
-  useEffect(() => {
-    load().catch(console.error);
-  }, [load]);
-
-  const decide = async (requestId: string, action: "approve" | "reject") => {
-    await api(`/api/admin/deferrals/${requestId}/${action}`, { method: "POST" });
-    await load();
-  };
-
-  return (
-    <section className="panel">
-      <div className="section-title">
-        <Clock size={19} />
-        <h2>Запросы на отсрочку</h2>
-      </div>
-      <div className="request-list">
-        {requests.map((request) => (
-          <article key={request.id} className="request-row">
-            <div>
-              <h3>{displayName(request.musician)}</h3>
-              <span>
-                {request.period} · {request.status}
-              </span>
-            </div>
-            <div className="icon-actions">
-              <button title="Одобрить" onClick={() => decide(request.id, "approve")}>
-                <Check size={18} />
-              </button>
-              <button title="Отклонить" onClick={() => decide(request.id, "reject")}>
-                <X size={18} />
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function AdminSettings() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [notifyBusy, setNotifyBusy] = useState(false);
+  const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const result = await api<{ settings: AppSettings }>("/api/admin/settings");
@@ -877,6 +809,19 @@ function AdminSettings() {
     setSettings(result.settings);
   };
 
+  const sendTestPaymentReminder = async () => {
+    setNotifyBusy(true);
+    setNotifyMessage(null);
+    try {
+      const result = await api<{ sent: number }>("/api/admin/settings/test-payment-reminder", {
+        method: "POST"
+      });
+      setNotifyMessage(`Тестовое оповещение отправлено: ${result.sent}`);
+    } finally {
+      setNotifyBusy(false);
+    }
+  };
+
   if (!settings) {
     return <section className="panel">...</section>;
   }
@@ -888,11 +833,18 @@ function AdminSettings() {
           <Settings size={19} />
           <h2>Настройки</h2>
         </div>
-        <button className="primary-button" onClick={save}>
-          <Save size={18} />
-          Сохранить
-        </button>
+        <div className="action-row">
+          <button className="ghost-button" onClick={sendTestPaymentReminder} disabled={notifyBusy}>
+            <Clock size={18} />
+            Тест оплаты
+          </button>
+          <button className="primary-button" onClick={save}>
+            <Save size={18} />
+            Сохранить
+          </button>
+        </div>
       </div>
+      {notifyMessage && <div className="notice">{notifyMessage}</div>}
       <div className="settings-grid">
         <label>
           День оплаты

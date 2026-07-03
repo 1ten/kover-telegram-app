@@ -1,4 +1,4 @@
-import type { DeferralRequest, Musician, Payment, Settings } from "@prisma/client";
+import type { Musician, Payment, Settings } from "@prisma/client";
 import { getPaymentDeadline } from "./dates.js";
 
 export const resolvePaymentStatus = (input: {
@@ -6,7 +6,6 @@ export const resolvePaymentStatus = (input: {
   settings: Settings;
   period: string;
   payment?: Payment | null;
-  deferral?: DeferralRequest | null;
   now?: Date;
 }) => {
   const now = input.now ?? new Date();
@@ -22,12 +21,6 @@ export const resolvePaymentStatus = (input: {
 
   if (input.payment?.status === "failed") {
     return { status: "failed" as const, dueAt, graceEndsAt, grace };
-  }
-
-  // Approved deferral is a period-level extension: payment_day stays unchanged,
-  // and this period is not shown as overdue until the admin changes the request.
-  if (input.deferral?.status === "approved") {
-    return { status: "pending" as const, dueAt, graceEndsAt, grace };
   }
 
   if (now > graceEndsAt) {
